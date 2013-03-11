@@ -1,6 +1,7 @@
 #
 # Emily Schultz (ess2183
 # COMS 4735, A2
+# Visual Information Retrieval
 # Due: 3/12/13
 #
 
@@ -9,15 +10,54 @@ import numpy as np
 from numpy import linalg as la
 
 TOTAL_IM = 40 #i01.ppm - i40.ppm
-BINS = 50
+BINS = 25
+COLS = 89 #images are 89x60
+ROWS = 60
 
 def main():
 
-    hist = readfiles()
-    #Step 1:
-    compimcolor(hist)
+    #hist = readfiles1()
+    #Step 1
+    #compimcolor(hist)
+    #Step 2
+    pixels = readfiles2()
+    #print pixels
+    #gray = grayscale(pixels)
 
-def readfiles():
+def readfiles2():
+    filepre = "images/i" #prefix
+    filepost = ".ppm"    #postfix
+
+    for i in range(1, TOTAL_IM+1):
+        if i < 10:
+            filename = filepre + "0" + str(i) + filepost
+        else:
+            filename = filepre + str(i) + filepost
+        p = readfile(filename)
+        prc = np.reshape(p, (ROWS,COLS,3)) #reshape into matrix 
+        #prc[1][0] == p[89]
+        #grayscale:
+        gray_im = []
+        for pixel in p:
+            avg = (pixel[0] + pixel[1] + pixel[2]) / 3
+            gray_im.append(avg)
+        grc = np.reshape(gray_im, (ROWS,COLS))
+        lap = []
+        for r in range(0,ROWS):
+            for c in range(0, COLS):
+                #ignore edges
+                if r == 0 or c == 0 or r == ROWS-1 or c == COLS-1:
+                    #lap.append(grc[r][c])
+                    'hi'
+                else:
+                    maskvalue = 8 * grc[r][c] - grc[r-1][c] - grc[r+1][c] - grc[r][c-1]
+                    maskvalue = maskvalue - grc[r][c+1] - grc[r-1][c-1] - grc[r-1][c+1]
+                    maskvalue = maskvalue - grc[r+1][c-1] - grc[r+1][c+1]
+                    lap.append(maskvalue)
+        laprc = np.reshape(lap, (ROWS-2,COLS-2))
+        #laprc[0][0], lap[0]
+
+def readfiles1():
     '''Read file pixel information for histogram array'''
     filepre = "images/i" #prefix
     filepost = ".ppm"    #postfix
