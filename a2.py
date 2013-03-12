@@ -1,5 +1,5 @@
 #
-# Emily Schultz (ess2183
+# Emily Schultz (ess2183)
 # COMS 4735, A2
 # Visual Information Retrieval
 # Due: 3/12/13
@@ -8,17 +8,18 @@
 import Image
 import numpy as np
 from numpy import linalg as la
+from scipy.cluster import hierarchy
 
 TOTAL_IM = 40 #i01.ppm - i40.ppm
 #Step 1 bins
 BINS = 52
 BIN_SIZE = int((255.0/BINS)+1)
 #Step 2 bins
-BIN2 = 100
-BIN2_SIZE = int((3100.0/BIN2))         #-1357 to 1520
+BIN2 = 408
+BIN2_SIZE = int((3100.0/BIN2)+1)         #-1357 to 1520
 # +- 1550
 #images are 89x60
-COLS = 89 
+COLS = 89
 ROWS = 60
 #for step 3, r value for S = rT + (1-r)C
 r = 0.6 #between 0 (pure color) and 1 (pure texture)
@@ -36,6 +37,30 @@ def main():
     #Step 3
     print "\nCOMBINED:"
     S = combinecolortex(Tvals, Cvals)
+    cluster(S)
+
+def cluster(S_list):
+    ''' hi'''
+
+#    scipy.cluster.hierarchy.dendrogram(S_list)
+
+    
+##    # create a set of 40 independent clusters
+    group = []
+    for im in range(0, TOTAL_IM):
+        group.append([im])
+    print group
+##    
+##    # go until they are all in one cluster
+##    for cluster in group:
+##        #singleton
+##        if len(cluster) == 1:
+##            cluster[0]
+##        #group
+##        else:
+##            for citem in cluster:
+##                
+
 
 def combinecolortex(Tvals, Cvals):
     '''Combine the [0,1] similarity values of color and texture into one num'''
@@ -115,11 +140,10 @@ def readfiles2():
         #laprc = np.reshape(lap, (ROWS-2,COLS-2))
 
         for j in range(0,len(lap)):
-            #handle background
+            #handle black background
             if gray_im[j] <= 40:
-                #black 
                 'ignore me'
-            #create histogram
+            #fill histogram
             else:
                 value = (lap[j] + 1550)/BIN2_SIZE #0 to 100
                 #print i, j, value
@@ -157,8 +181,8 @@ def compimtexture(thist):
                     minval = l1norm
                     minim = im2+1
         #display max min for each image
-        print im1+1, "farthest = ", minim, "\t", minval
-        print im1+1, "closest = ", maxim, "\t", maxval
+        #print im1+1, "farthest = ", minim, "\t", minval
+        #print im1+1, "closest = ", maxim, "\t", maxval
         #update the overall max and min images
         if overallmin > minval:
             overallmin = minval
@@ -184,7 +208,6 @@ def readfiles1():
         else:
             filename = filepre + str(i) + filepost
         p = readfile(filename)
-
         hist = fillhist(p, i, hist)
     return hist
     
@@ -221,8 +244,8 @@ def compimcolor(hist):
                     minval = l1norm
                     minim = im2+1
         #display the max and min images for this image
-        print im1+1, "farthest = ", minim,"\t", minval
-        print im1+1, "closest = ", maxim,"\t", maxval
+        #print im1+1, "farthest = ", minim,"\t", minval
+        #print im1+1, "closest = ", maxim,"\t", maxval
         #update the overall max and min images
         if overallmin > minval:
             overallmin = minval
@@ -240,11 +263,10 @@ def compimcolor(hist):
 
 def fillhist(pixels, inum, hist):
     '''Step 1 Color Fill the hist array for inum image given pixels'''
-    blackcount = 0
     for pixel in pixels:
         #ignore black pixels
         if pixel[0] < 40 and pixel[1] < 40 and pixel[2] < 40:
-            blackcount = blackcount + 1
+            'ignore me'
         else:
             r = pixel[0]/BINS
             g = pixel[1]/BINS
