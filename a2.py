@@ -11,7 +11,7 @@ from numpy import linalg as la
 
 TOTAL_IM = 40 #i01.ppm - i40.ppm
 #Step 1 bins
-BINS = 25
+BINS = 52
 BIN_SIZE = int((255.0/BINS)+1)
 #Step 2 bins
 BIN2 = 100
@@ -20,15 +20,64 @@ BIN2_SIZE = int((3100.0/BIN2))         #-1357 to 1520
 #images are 89x60
 COLS = 89 
 ROWS = 60
+#for step 3, r value for S = rT + (1-r)C
+r = 0.6 #between 0 (pure color) and 1 (pure texture)
 
 def main():
 
-    #hist = readfiles1()
+    print "COLOR:"
+    colorhist = readfiles1()
     #Step 1
-    #compimcolor(hist)
+    Cvals = compimcolor(colorhist)
     #Step 2
+    print "\nTEXTURE:"
     pixels = readfiles2()
-    compimtexture(pixels)
+    Tvals = compimtexture(pixels)
+    #Step 3
+    print "\nCOMBINED:"
+    S = combinecolortex(Tvals, Cvals)
+
+def combinecolortex(Tvals, Cvals):
+    '''Combine the [0,1] similarity values of color and texture into one num'''
+    
+    S = np.ones((TOTAL_IM, TOTAL_IM))
+    S = r * Tvals + (1-r) * Cvals
+    maxtotal = 0
+    overallmin = 1.0
+    overallmax = 0.0
+    overallminim = 0
+    overallmaxim = 0
+
+    for im1 in range(0, TOTAL_IM):
+        maxval = 0
+        minval = 2
+        maxim = 0
+        minim = 0
+        for im2 in range(0, TOTAL_IM):
+            if im1 != im2:
+                cur_val = S[im1][im2]
+                #update max and min
+                if maxval < cur_val:
+                    maxval = cur_val
+                    maxim = im2+1
+                if minval > cur_val:
+                    minval = cur_val
+                    minim = im2+1
+        #display max min for each image
+        print im1+1, "farthest = ", minim, "\t", minval
+        print im1+1, "closest = ", maxim, "\t", maxval
+        maxtotal += maxval
+        #update the overall max and min images
+        if overallmin > minval:
+            overallmin = minval
+            overallminim = [im1+1, minim]
+        if overallmax < maxval:
+            overallmax = maxval
+            overallmaxim = [im1+1, maxim]
+    #display the max and min images
+    print "Overall farthest (0) = ", overallmin,"\t", overallminim
+    print "Overall closest (1) = ", overallmax,"\t", overallmaxim
+    return S
 
 def readfiles2():
     '''Read file pixel information for Step 2 histogram comparison'''
@@ -63,14 +112,13 @@ def readfiles2():
                     maskvalue = maskvalue - grc[r][c+1] - grc[r-1][c-1] - grc[r-1][c+1]
                     maskvalue = maskvalue - grc[r+1][c-1] - grc[r+1][c+1]
                     lap.append(maskvalue)
-        laprc = np.reshape(lap, (ROWS-2,COLS-2))
-
+        #laprc = np.reshape(lap, (ROWS-2,COLS-2))
 
         for j in range(0,len(lap)):
             #handle background
             if gray_im[j] <= 40:
-                #black
-                'ignoreme'
+                #black 
+                'ignore me'
             #create histogram
             else:
                 value = (lap[j] + 1550)/BIN2_SIZE #0 to 100
@@ -78,24 +126,29 @@ def readfiles2():
                 hist[i-1][value] += 1
     return hist
 
-def compimtexture(hist):
+def compimtexture(thist):
+    '''Compare all the images based on gross texture histogram thist and report closest and farthest
+       for each image, and overall'''
     overallmin = 1.0
     overallmax = 0.0
     overallminim = 0
     overallmaxim = 0
-    
+    values = np.ones((TOTAL_IM,TOTAL_IM))
     for im1 in range(0, TOTAL_IM):
         maxval = 0
         minval = 10000
         maxim = 0
         minim = 0
         
-        total1 = sum(hist[im1])
+        total1 = sum(thist[im1])
         for im2 in range(0, TOTAL_IM):
             if im1 != im2:
-                total2 = sum(hist[im2])
-                diff = abs((hist[im1]/float(total1)) - (hist[im2]/float(total2)))
-                l1norm = sum(diff)/2.0
+                total2 = sum(thist[im2])
+                diff = abs((thist[im1]/float(total1)) - (thist[im2]/float(total2)))
+                l1norm = 1 - sum(diff)/2.0
+
+                values[im1][im2] = l1norm
+                
                 #update max and min
                 if maxval < l1norm:
                     maxval = l1norm
@@ -104,8 +157,8 @@ def compimtexture(hist):
                     minval = l1norm
                     minim = im2+1
         #display max min for each image
-        print im1+1, "min = ", minim, "\t", (1.0 - minval)
-        print im1+1, "max = ", maxim, "\t", (1.0 - maxval)
+        print im1+1, "farthest = ", minim, "\t", minval
+        print im1+1, "closest = ", maxim, "\t", maxval
         #update the overall max and min images
         if overallmin > minval:
             overallmin = minval
@@ -114,11 +167,12 @@ def compimtexture(hist):
             overallmax = maxval
             overallmaxim = [im1+1, maxim]
     #display the max and min images
-    print "Overall min = ", (1.0 - overallmin),"\t", overallminim
-    print "Overall max = ", (1.0 - overallmax),"\t", overallmaxim
+    print "Overall farthest = ", overallmin, "\t", overallminim
+    print "Overall closest = ", overallmax, "\t", overallmaxim
+    return values
 
 def readfiles1():
-    '''Read file pixel information for histogram array'''
+    '''For step 1 (gross color matching), reads in each file and compute the histogram'''
     filepre = "images/i" #prefix
     filepost = ".ppm"    #postfix
 
@@ -140,6 +194,8 @@ def compimcolor(hist):
     overallmax = 0.0
     overallminim = 0
     overallmaxim = 0
+    values = np.ones((TOTAL_IM, TOTAL_IM))
+    
     #iterate through the images
     for im1 in range(0,TOTAL_IM):
         maxim = 0
@@ -153,7 +209,10 @@ def compimcolor(hist):
                 #compute the l1-norm
                 total2 = sum(sum(sum(hist[im2])))
                 diff = abs((hist[im1]/float(total1)) - (hist[im2]/float(total2)))
-                l1norm = sum(sum(sum(diff)))/2.0
+                
+                l1norm = 1 - sum(sum(sum(diff)))/2.0
+                
+                values[im1][im2] = l1norm
                 #update the max and min images
                 if maxval < l1norm:
                     maxval = l1norm
@@ -162,8 +221,8 @@ def compimcolor(hist):
                     minval = l1norm
                     minim = im2+1
         #display the max and min images for this image
-        print im1+1, "min = ", minim,"\t", (1.0 - minval)
-        print im1+1, "max = ", maxim,"\t", (1.0 - maxval)
+        print im1+1, "farthest = ", minim,"\t", minval
+        print im1+1, "closest = ", maxim,"\t", maxval
         #update the overall max and min images
         if overallmin > minval:
             overallmin = minval
@@ -172,15 +231,19 @@ def compimcolor(hist):
             overallmax = maxval
             overallmaxim = [im1+1, maxim]
     #display the max and min images
-    print "Overall min = ", (1.0 - overallmin),"\t", overallminim
-    print "Overall max = ", (1.0 - overallmax),"\t", overallmaxim
+    print "Overall farthest = ", overallmin,"\t", overallminim
+    print "Overall closest = ", overallmax, "\t", overallmaxim
+    return values
+
+
+
 
 def fillhist(pixels, inum, hist):
-    '''Fill the hist array for inum image given pixels'''
+    '''Step 1 Color Fill the hist array for inum image given pixels'''
     blackcount = 0
     for pixel in pixels:
         #ignore black pixels
-        if pixel[0] < 50 and pixel[1] < 50 and pixel[2] < 50:
+        if pixel[0] < 40 and pixel[1] < 40 and pixel[2] < 40:
             blackcount = blackcount + 1
         else:
             r = pixel[0]/BINS
