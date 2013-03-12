@@ -9,6 +9,7 @@ import Image
 import numpy as np
 from numpy import linalg as la
 from scipy.cluster import hierarchy
+import matplotlib.pyplot as plt
 
 TOTAL_IM = 40 #i01.ppm - i40.ppm
 #Step 1 bins
@@ -22,7 +23,7 @@ BIN2_SIZE = int((3100.0/BIN2)+1)         #-1357 to 1520
 COLS = 89
 ROWS = 60
 #for step 3, r value for S = rT + (1-r)C
-#r = 0.6 #between 0 (pure color) and 1 (pure texture)
+r = 0.15 #between 0 (pure color) and 1 (pure texture)
 
 def main():
 
@@ -36,48 +37,41 @@ def main():
     Tvals = compimtexture(pixels)
     #Step 3
     print "\nCOMBINED:"
-    #S = combinecolortex(Tvals, Cvals)
-    vals = []
-    xs = []
-    for r in np.arange(0,1.01, 0.05):
-        a,b = combinecolortex(Tvals, Cvals, r)
-        print r, a, b
-        vals.append(a-b)
-        xs.append(r)
-    print vals
-    from matplotlib import pyplot
-    pyplot.plot(xs, vals, 'k')
-    pyplot.xlabel('r')
-    pyplot.ylabel('Overall max - Overall min')
-    pyplot.show()
-    
-    
-    #cluster(S)
+
+    #plot for each value of r
+    #vals = []
+    #xs = []
+    #for r in np.arange(0,1.01, 0.05):
+    #    a,b = combinecolortex(Tvals, Cvals, r)
+    #    print r, a, b
+    #    vals.append(a-b)
+    #    xs.append(r)
+    #pyplot.plot(xs, vals, 'k')
+    #pyplot.xlabel('r')
+    #pyplot.ylabel('Overall max - Overall min')
+    #pyplot.show()
+    S = combinecolortex(Tvals, Cvals)
+    cluster(S)
 
 def cluster(S_list):
     ''' hi'''
+    import scipy.cluster.hierarchy
+    D = 1 - S_list
+    # two different link arrays (single and complete)
+    link_array = scipy.cluster.hierarchy.linkage(D, method='single')
+    link_array2 = scipy.cluster.hierarchy.linkage(D, method='complete')
+    #display dendrogram 1
+    result = scipy.cluster.hierarchy.dendrogram(link_array,orientation='left')
+    plt.xlabel('Distance D = 1-S')
+    plt.ylabel('Image #')
+    plt.show()
+    #display dendrogram 2
+    plt.xlabel('Distance D = 1-S')
+    plt.ylabel('Image #')
+    result2 = scipy.cluster.hierarchy.dendrogram(link_array2, orientation='left')
+    plt.show()
 
-#    scipy.cluster.hierarchy.dendrogram(S_list)
-
-    
-##    # create a set of 40 independent clusters
-    group = []
-    for im in range(0, TOTAL_IM):
-        group.append([im])
-    print group
-##    
-##    # go until they are all in one cluster
-##    for cluster in group:
-##        #singleton
-##        if len(cluster) == 1:
-##            cluster[0]
-##        #group
-##        else:
-##            for citem in cluster:
-##                
-
-
-def combinecolortex(Tvals, Cvals, r):
+def combinecolortex(Tvals, Cvals):
     '''Combine the [0,1] similarity values of color and texture into one num'''
     
     S = np.ones((TOTAL_IM, TOTAL_IM))
@@ -104,8 +98,8 @@ def combinecolortex(Tvals, Cvals, r):
                     minval = cur_val
                     minim = im2+1
         #display max min for each image
-        print im1+1, "farthest = ", minim, "\t", minval
-        print im1+1, "closest = ", maxim, "\t", maxval
+        #print im1+1, "farthest = ", minim, "\t", minval
+        #print im1+1, "closest = ", maxim, "\t", maxval
         maxtotal += maxval
         #update the overall max and min images
         if overallmin > minval:
@@ -117,7 +111,7 @@ def combinecolortex(Tvals, Cvals, r):
     #display the max and min images
     print "Overall farthest (0) = ", overallmin,"\t", overallminim
     print "Overall closest (1) = ", overallmax,"\t", overallmaxim
-    return overallmax,overallmin#S
+    return S
 
 def readfiles2():
     '''Read file pixel information for Step 2 histogram comparison'''
