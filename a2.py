@@ -22,7 +22,7 @@ BIN2_SIZE = int((3100.0/BIN2)+1)         #-1357 to 1520
 COLS = 89
 ROWS = 60
 #for step 3, r value for S = rT + (1-r)C
-r = 0.6 #between 0 (pure color) and 1 (pure texture)
+#r = 0.6 #between 0 (pure color) and 1 (pure texture)
 
 def main():
 
@@ -36,8 +36,23 @@ def main():
     Tvals = compimtexture(pixels)
     #Step 3
     print "\nCOMBINED:"
-    S = combinecolortex(Tvals, Cvals)
-    cluster(S)
+    #S = combinecolortex(Tvals, Cvals)
+    vals = []
+    xs = []
+    for r in np.arange(0,1.01, 0.05):
+        a,b = combinecolortex(Tvals, Cvals, r)
+        print r, a, b
+        vals.append(a-b)
+        xs.append(r)
+    print vals
+    from matplotlib import pyplot
+    pyplot.plot(xs, vals, 'k')
+    pyplot.xlabel('r')
+    pyplot.ylabel('Overall max - Overall min')
+    pyplot.show()
+    
+    
+    #cluster(S)
 
 def cluster(S_list):
     ''' hi'''
@@ -62,7 +77,7 @@ def cluster(S_list):
 ##                
 
 
-def combinecolortex(Tvals, Cvals):
+def combinecolortex(Tvals, Cvals, r):
     '''Combine the [0,1] similarity values of color and texture into one num'''
     
     S = np.ones((TOTAL_IM, TOTAL_IM))
@@ -102,7 +117,7 @@ def combinecolortex(Tvals, Cvals):
     #display the max and min images
     print "Overall farthest (0) = ", overallmin,"\t", overallminim
     print "Overall closest (1) = ", overallmax,"\t", overallmaxim
-    return S
+    return overallmax,overallmin#S
 
 def readfiles2():
     '''Read file pixel information for Step 2 histogram comparison'''
@@ -259,8 +274,6 @@ def compimcolor(hist):
     return values
 
 
-
-
 def fillhist(pixels, inum, hist):
     '''Step 1 Color Fill the hist array for inum image given pixels'''
     for pixel in pixels:
@@ -275,7 +288,7 @@ def fillhist(pixels, inum, hist):
     return hist
      
 def readfile(filename):
-    ''' Read in the ppm file with the given filename '''
+    '''Read in the ppm file with the given filename '''
     im = Image.open(filename)
     pixels = list(im.getdata())
     return pixels
