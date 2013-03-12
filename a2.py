@@ -8,17 +8,15 @@
 import Image
 import numpy as np
 from numpy import linalg as la
-from scipy.cluster import hierarchy
 import matplotlib.pyplot as plt
 
 TOTAL_IM = 40 #i01.ppm - i40.ppm
-#Step 1 bins
+#Step 1 bins (COLOR)
 BINS = 52
 BIN_SIZE = int((255.0/BINS)+1)
-#Step 2 bins
+#Step 2 bins (TEXTURE)
 BIN2 = 408
-BIN2_SIZE = int((3100.0/BIN2)+1)         #-1357 to 1520
-# +- 1550
+BIN2_SIZE = int((3100.0/BIN2)+1)
 #images are 89x60
 COLS = 89
 ROWS = 60
@@ -27,18 +25,20 @@ r = 0.15 #between 0 (pure color) and 1 (pure texture)
 
 def main():
 
+    #Step 1
     print "COLOR:"
     colorhist = readfiles1()
-    #Step 1
     Cvals = compimcolor(colorhist)
+    
     #Step 2
     print "\nTEXTURE:"
     pixels = readfiles2()
     Tvals = compimtexture(pixels)
+    
     #Step 3
     print "\nCOMBINED:"
-
-    #plot for each value of r
+    
+    #PLOT FOR EACH VALUE OF R
     #vals = []
     #xs = []
     #for r in np.arange(0,1.01, 0.05):
@@ -50,11 +50,49 @@ def main():
     #pyplot.xlabel('r')
     #pyplot.ylabel('Overall max - Overall min')
     #pyplot.show()
+    
     S = combinecolortex(Tvals, Cvals)
     cluster(S)
+    
+    #Step 4:
+    step4plot(Tvals, Cvals, S)
+
+def step4plot(Tvals, Cvals, Svals):
+    '''
+    Calculates x values based on color distance from overall closest point and
+    y values based on texture difference from overall closest point, and plots.
+    '''
+    Dvals = 1 - Svals
+    totalmin = 10000
+    totalminindex = 0
+    Dsum = sum(Dvals)
+    # find the best overall reference point - smallest difference
+    for im1 in range(0, TOTAL_IM):
+        if Dsum[im1] < totalmin:
+            totalmin = Dsum[im1]
+            totalminindex = im1
+    print Dsum[totalminindex]
+    print Dsum[12]
+    print totalminindex
+    xvals = []
+    yvals = []
+    for im in range(0, TOTAL_IM):
+        texdif = 1 - Tvals[totalminindex][im]
+        coldif = 1 - Cvals[totalminindex][im]
+        xvals.append(coldif) #x: color
+        yvals.append(texdif) #y: texture
+    for i in range(0, TOTAL_IM):
+        plt.plot(xvals[i], yvals[i], 'ko')
+        plt.text(xvals[i],yvals[i], '%d' %(i))
+    plt.xlabel('Color Difference')
+    plt.ylabel('Texture Difference')
+    plt.show()
 
 def cluster(S_list):
-    ''' hi'''
+    '''
+    For Step 3, creates the two dendrograms (single-link and complete-link)
+    then displays them using  pyplot.
+    '''
     import scipy.cluster.hierarchy
     D = 1 - S_list
     # two different link arrays (single and complete)
@@ -70,10 +108,12 @@ def cluster(S_list):
     plt.ylabel('Image #')
     result2 = scipy.cluster.hierarchy.dendrogram(link_array2, orientation='left')
     plt.show()
-
+ 
 def combinecolortex(Tvals, Cvals):
-    '''Combine the [0,1] similarity values of color and texture into one num'''
-    
+    '''
+    For Step 3, combine the [0,1] similarity values of color and texture
+    into one numbest S based on a determined r
+    '''
     S = np.ones((TOTAL_IM, TOTAL_IM))
     S = r * Tvals + (1-r) * Cvals
     maxtotal = 0
@@ -114,7 +154,7 @@ def combinecolortex(Tvals, Cvals):
     return S
 
 def readfiles2():
-    '''Read file pixel information for Step 2 histogram comparison'''
+    '''Step 2: Read file pixel information for histogram comparison'''
     filepre = "images/i" #prefix
     filepost = ".ppm"    #postfix
 
@@ -128,7 +168,6 @@ def readfiles2():
             filename = filepre + str(i) + filepost
         p = readfile(filename)
         prc = np.reshape(p, (ROWS,COLS,3)) #reshape into matrix 
-        #prc[r][c] == p[COLS*r+c]
         
         #grayscale image:
         gray_im = []
@@ -136,6 +175,7 @@ def readfiles2():
             avg = (pixel[0] + pixel[1] + pixel[2]) / 3
             gray_im.append(avg)
         grc = np.reshape(gray_im, (ROWS,COLS))
+        
         #create laplacian images
         lap = []
         for r in range(0,ROWS):
@@ -146,7 +186,6 @@ def readfiles2():
                     maskvalue = maskvalue - grc[r][c+1] - grc[r-1][c-1] - grc[r-1][c+1]
                     maskvalue = maskvalue - grc[r+1][c-1] - grc[r+1][c+1]
                     lap.append(maskvalue)
-        #laprc = np.reshape(lap, (ROWS-2,COLS-2))
 
         for j in range(0,len(lap)):
             #handle black background
@@ -154,32 +193,39 @@ def readfiles2():
                 'ignore me'
             #fill histogram
             else:
-                value = (lap[j] + 1550)/BIN2_SIZE #0 to 100
-                #print i, j, value
+                value = (lap[j] + 1550)/BIN2_SIZE
                 hist[i-1][value] += 1
     return hist
 
 def compimtexture(thist):
-    '''Compare all the images based on gross texture histogram thist and report closest and farthest
-       for each image, and overall'''
+    '''
+    Compare all the images based on gross texture histogram thist and report
+    closest and farthest for each image, and overall closest and farthest
+    '''
+    #overall best/worst values
     overallmin = 1.0
     overallmax = 0.0
     overallminim = 0
     overallmaxim = 0
+    
+    #array of values for later
     values = np.ones((TOTAL_IM,TOTAL_IM))
     for im1 in range(0, TOTAL_IM):
+        #this image's best/worst values
         maxval = 0
         minval = 10000
         maxim = 0
         minim = 0
         
+        #total number of points in first histogram
         total1 = sum(thist[im1])
         for im2 in range(0, TOTAL_IM):
             if im1 != im2:
+                #total number of points in second histogram
                 total2 = sum(thist[im2])
+                #normalize
                 diff = abs((thist[im1]/float(total1)) - (thist[im2]/float(total2)))
                 l1norm = 1 - sum(diff)/2.0
-
                 values[im1][im2] = l1norm
                 
                 #update max and min
@@ -205,7 +251,7 @@ def compimtexture(thist):
     return values
 
 def readfiles1():
-    '''For step 1 (gross color matching), reads in each file and compute the histogram'''
+    '''Step 1: read in each file and compute the color histogram'''
     filepre = "images/i" #prefix
     filepost = ".ppm"    #postfix
 
@@ -221,7 +267,7 @@ def readfiles1():
     return hist
     
 def compimcolor(hist):
-    '''Compare all the images using L1-norm of the color hist array'''
+    '''Step 1: Compare all the images using L1-norm of the color hist array'''
     overallmin = 1.0
     overallmax = 0.0
     overallminim = 0
@@ -269,7 +315,7 @@ def compimcolor(hist):
 
 
 def fillhist(pixels, inum, hist):
-    '''Step 1 Color Fill the hist array for inum image given pixels'''
+    '''Step 1: Color Fill the hist array for inum image given pixels'''
     for pixel in pixels:
         #ignore black pixels
         if pixel[0] < 40 and pixel[1] < 40 and pixel[2] < 40:
@@ -282,7 +328,7 @@ def fillhist(pixels, inum, hist):
     return hist
      
 def readfile(filename):
-    '''Read in the ppm file with the given filename '''
+    '''Read in the ppm file with the given filename using PIL'''
     im = Image.open(filename)
     pixels = list(im.getdata())
     return pixels
