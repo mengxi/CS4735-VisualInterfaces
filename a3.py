@@ -23,14 +23,72 @@ def main():
     step1(map_im, b_names)
 
     # Step 2: Describing compact spatial relations
-
+    
     # Step 3: Source and goal description and user interface
     # Step 4: Creativity - Path generation
-    
+
+def North(S,G):
+    '''Returns True if North of S is G.'''
+    if coms[G][1] < coms[S][1]:
+        return True
+    return False
+
+def South(S,G):
+    '''Returns True if South of S is G.'''
+    if coms[G][1] > coms[S][1]:
+        return True
+    return False
+
+def East(S,G):
+    '''Returns True if East of S is G.'''
+    if coms[G][0] > coms[S][0]:
+        return True
+    return False
+
+def West(S,G):
+    '''Returns True if West of S is G.'''
+    if coms[G][0] < coms[S][0]:
+        return True
+    return False
+
+def Near(S,G):
+    '''Returns True if Near to S is G.'''
+    # check distance of min bounding rectangle away for goal
+    Sxloc = coms[S][0]
+    Syloc = coms[S][1]
+    Smbr = mbrs[S]
+    Sxlen = Smbr[2] - Smbr[0]
+    Sylen = Smbr[3] - Smbr[1]
+
+    # get all pixels within the min bound rect distance of this building
+    minSx = Smbr[0] - Sxlen
+    if minSx < 0:           #edge condition
+        minSx = 0
+    maxSx = Smbr[2] + Sxlen + 1
+    if maxSx >= width:      #edge condition
+        maxSx = width - 1
+    minSy = Smbr[1] - Sylen
+    if minSy < 0:           #edge condition
+        minSy = 0
+    maxSy = Smbr[3] + Sylen + 1
+    if maxSy >= height:     #edge condition
+        maxSy = height - 1
+
+    # get all pixels within min/max range
+    values = pix_grid[minSy:maxSy][:,minSx:maxSx]
+    # check for the goal building number in the pixels
+    places = np.where(values == (G+1))
+
+    # if where returns nothing, G is not near to S
+    if np.size(places) == 0:
+        return False
+    return True
+
 def readmaps(label_file, table_file):
     '''Given two filenames, reads in the files and stores the information.'''
     # get the pixel information of the buildings from label_file
     lab_im = Image.open(label_file)
+    global num_buildings
     num_buildings = lab_im.getextrema()[1] #27
 
     # create a list of the buildings names from table_file
@@ -46,12 +104,18 @@ def readmaps(label_file, table_file):
 def step1(campus_im, names):
     '''Prints out features and descriptions for each building'''
 
+    global width
+    global height
     width = campus_im.size[0] #275
     height = campus_im.size[1] #495
 
     pix_list = np.array(campus_im.getdata())        #list of 275x495 items
+    global pix_grid
     pix_grid = np.reshape(pix_list, (height,width)) #495x275 array
 
+    global areas
+    global coms
+    global mbrs
     areas = np.zeros(len(names))    # list of areas
     coms = np.zeros((len(names),2)) # list of centers of mass
     mbrs = np.zeros((len(names),4)) # list of min bound rect coords
@@ -67,7 +131,7 @@ def step1(campus_im, names):
         # Center of Mass (where x oriented east and y oriented south)
         xcom = sum(indices[0])/float(area)
         ycom = sum(indices[1])/float(area)
-        coms[bnum-1] = [xcom,ycom]
+        coms[bnum-1] = [ycom,xcom]
 
         # Minimum Bounding Rectangle: upper left and lower right coordinates
         maxx = max(indices[0])
@@ -77,26 +141,27 @@ def step1(campus_im, names):
         mbrs[bnum-1] = [miny,minx,maxy,maxx]
 
     # Descriptions list
+    global descriptions
     descriptions = [[] for i in range(0,len(names))]
     # Geometry
-    shape(descriptions, areas, coms, mbrs, pix_grid)
+    shape()
     # Size
-    size(descriptions, areas)
+    size()
     # Orientation
-    orientation(descriptions, mbrs)
+    orientation()
     # Extrema
-    extrema(descriptions, coms, mbrs, width, height)
+    extrema()
 
     # Display all info for each building
     for bnum in range(0, len(names)):
         print "Building #%d: %s" %(bnum+1,names[bnum])
-        print "\tCenter of Mass: (%f, %f)" %(coms[bnum][1],coms[bnum][0])
+        print "\tCenter of Mass: (%f, %f)" %(coms[bnum][0],coms[bnum][1])
         print "\tArea: ", areas[bnum]
         print "\tMin Bounding Rect: (%d,%d) to (%d,%d)" \
             %(mbrs[bnum][0],mbrs[bnum][1],mbrs[bnum][2],mbrs[bnum][3])
         print "\tDescription: ", descriptions[bnum]
 
-def shape(descriptions, areas, coms, mbrs, pix_grid):
+def shape():
     '''Adds shape descriptions to the desciptions list.'''
     for bnum in range(0, len(descriptions)):
         # get the current min bounding rectangle
@@ -116,7 +181,8 @@ def shape(descriptions, areas, coms, mbrs, pix_grid):
         # compare the area of the MBR to the sum of the values in MBR
         if sval == mbrarea:
             # exactly square
-            if bwidth >= (bheight - sqerrorval) and bwidth <= (bheight + sqerrorval):
+            if bwidth >= (bheight - sqerrorval) and \
+               bwidth <= (bheight + sqerrorval):
                 descriptions[bnum].append('square')
             # exactly rectangular
             else:
@@ -124,7 +190,8 @@ def shape(descriptions, areas, coms, mbrs, pix_grid):
         # some 0 pixels, but not may
         elif sval >= (mbrarea-isherrorval) and sval <= (mbrarea+isherrorval):
             # squarish
-            if bwidth >= (bheight - sqerrorval) and bwidth <= (bheight + sqerrorval):
+            if bwidth >= (bheight - sqerrorval) and \
+               bwidth <= (bheight + sqerrorval):
                 descriptions[bnum].append('squarish')
             # rectangularish
             else:
@@ -134,7 +201,7 @@ def shape(descriptions, areas, coms, mbrs, pix_grid):
             descriptions[bnum].append('narrow')
         # l-shaped
         
-def size(descriptions, areas):
+def size():
     '''Adds size descriptions to the descriptions list.'''
     # largest building's area
     maxarea = max(areas)
@@ -159,7 +226,7 @@ def size(descriptions, areas):
     descriptions[mini].append('smallest')
     descriptions[maxi].append('largest')
 
-def orientation(descriptions, mbrs):
+def orientation():
     '''Adds orientation descriptions to the descriptions list.'''
     for bnum in range(0, len(descriptions)):
         mbr = mbrs[bnum]
@@ -175,7 +242,7 @@ def orientation(descriptions, mbrs):
         else:
             descriptions[bnum].append('symmetric')
 
-def extrema(descriptions, coms, mbrs, W, H):
+def extrema():
     '''Adds extrema descriptions to the descriptions list.'''
     # widest and tallest and central
     wid_bnum = -1
@@ -183,7 +250,7 @@ def extrema(descriptions, coms, mbrs, W, H):
     cen_bnum = -1
     maxwidth = 0
     maxheight = 0
-    mincen = W+H
+    mincen = width + height
 
     # most central, east, west, north, south
     east_bnum = -1
@@ -191,10 +258,10 @@ def extrema(descriptions, coms, mbrs, W, H):
     nor_bnum = -1
     sou_bnum = -1
     
-    mineast = W+H
-    minwest = W+H
-    minnorth = W+H
-    minsouth = W+H
+    mineast = width + height
+    minwest = width + height
+    minnorth = width + height
+    minsouth = width + height
 
     # most SE, SW, NE, NW
     SE_bnum = -1
@@ -202,68 +269,69 @@ def extrema(descriptions, coms, mbrs, W, H):
     NE_bnum = -1
     NW_bnum = -1
     
-    minSE = W+H
-    minSW = W+H
-    minNE = W+H
-    minNW = W+H
+    minSE = width + height
+    minSW = width + height
+    minNE = width + height
+    minNW = width + height
     
     for bnum in range(0, len(descriptions)):
         mbr = mbrs[bnum]
         # widest?
-        width = mbr[3] - mbr[1]
-        if width >= maxwidth:
+        cur_width = mbr[2] - mbr[0]
+        if cur_width >= maxwidth:
             wid_bnum = bnum
-            maxwidth = width
+            maxwidth = cur_width
         # tallest?
-        height = mbr[2] - mbr[0]
-        if height >= maxheight:
+        cur_height = mbr[3] - mbr[1]
+        if cur_height >= maxheight:
             hei_bnum = bnum
-            maxheight = height
+            maxheight = cur_height
         # central?
-        centrality = abs((H/2) - coms[bnum][0]) + abs((W/2) - coms[bnum][1])
+        centrality = abs((height/2) - coms[bnum][1]) + \
+                     abs((width/2) - coms[bnum][0])
         if centrality <= mincen:
             cen_bnum = bnum
             mincen = centrality
         # north?
-        northerness = abs((W/2) - coms[bnum][1]) + mbr[1]
+        northerness = abs((width/2) - coms[bnum][0]) + mbr[1]
         if northerness < minnorth:
             nor_bnum = bnum
             minnorth = northerness
         # south?
-        southerness = abs((W/2) - coms[bnum][1]) + (H - mbr[3])
+        southerness = abs((width/2) - coms[bnum][0]) + (height - mbr[3])
         if southerness <= minsouth:
             sou_bnum = bnum
             minsouth = southerness
         # east?
-        easterness = abs((H/2) - coms[bnum][0]) + (W - mbr[2])
+        easterness = abs((height/2) - coms[bnum][1]) + (width - mbr[2])
         if easterness <= mineast:
             east_bnum = bnum
             mineast = easterness
         # west?
-        westerness = abs((H/2) - coms[bnum][0]) + mbr[0]
+        westerness = abs((height/2) - coms[bnum][1]) + mbr[0]
         if westerness <= minwest:
             west_bnum = bnum
             minwest = westerness
         # northeast?
-        if mbr[1] + (W - mbr[2]) < minNE:
-            minNE = mbr[1] + (W - mbr[2])
+        if mbr[1] + (width - mbr[2]) < minNE:
+            minNE = mbr[1] + (width - mbr[2])
             NE_bnum = bnum
         # northwest?
         if mbr[1] + mbr[0] < minNW:
             minNW = mbr[0] + mbr[1]
             NW_bnum = bnum
         # southeast?
-        if (H-mbr[3]) + (W - mbr[2]) < minSE:
-            minSE = (H-mbr[3]) + (W - mbr[2])
+        if (height-mbr[3]) + (width - mbr[2]) < minSE:
+            minSE = (height-mbr[3]) + (width - mbr[2])
             SE_bnum = bnum
         # southwest?
-        if (H-mbr[3]) + mbr[0] < minSW:
-            minSW = (H-mbr[3]) + mbr[0]
+        if (height-mbr[3]) + mbr[0] < minSW:
+            minSW = (height-mbr[3]) + mbr[0]
             SW_bnum = bnum
 
     # add descriptions
-    descriptions[wid_bnum].append("tallest (N/S)")
-    descriptions[hei_bnum].append("widest (E/W)")
+    descriptions[hei_bnum].append("tallest (N/S)")
+    descriptions[wid_bnum].append("widest (E/W)")
     descriptions[cen_bnum].append("central-most")
 
     # directions
