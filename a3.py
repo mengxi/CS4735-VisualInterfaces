@@ -97,35 +97,65 @@ def step2():
                 print "East of ", i+1," is ", j+1
                 count += 1
             if near_array[i][j]:
-                print "Near to ", i+1, " is ", j+1
+                #print "Near to ", i+1, " is ", j+1
                 ncount += 1
     print count, ncount
 
 def North(S,G):
     '''Returns True if North of S is G.'''
-    #if coms[G][1] < mbrs[S][1]:
-    if coms[G][1] + 20 > coms[S][1]:
+    # if it's a building number, get its mbr
+    if isinstance(G, int):
+        var1 = mbrs[G][3]
+    # otherwise, its a point, so get its x coordinate
+    else:
+        var1 = G[1]
+    if isinstance(S, int):
+        var2 = mbrs[S][1]
+    else:
+        var2 = S[1]
+    if var1 < var2:
         return True
     return False
 
 def South(S,G):
     '''Returns True if South of S is G.'''
-    #if coms[G][1] > mbrs[S][3]:
-    if coms[G][1] > 20 + coms[S][1]:
+    if isinstance(G, int):
+        var1 = mbrs[G][1]
+    else:
+        var1 = G[1]
+    if isinstance(S, int):
+        var2 = mbrs[S][3]
+    else:
+        var2 = S[1]
+    if var1 > var2:
         return True
     return False
 
 def East(S,G):
     '''Returns True if East of S is G.'''
-    #if coms[G][0] > mbrs[S][2]:
-    if coms[G][0] > 20 + coms[S][0]:
+    if isinstance(G, int):
+        var1 = mbrs[G][0]
+    else:
+        var1 = G[0]
+    if isinstance(S, int):
+        var2 = mbrs[S][2]
+    else:
+        var2 = S[0]
+    if var1 > var2:
         return True
     return False
 
 def West(S,G):
     '''Returns True if West of S is G.'''
-    #if coms[G][0] < mbrs[S][0]:
-    if coms[G][0] + 20 < coms[S][0]:
+    if isinstance(G, int):
+        var1 = mbrs[G][2]
+    else:
+        var1 = G[0]
+    if isinstance(S, int):
+        var2 = mbrs[S][0]
+    else:
+        var2 = S[0]
+    if var1 < var2:
         return True
     return False
 
