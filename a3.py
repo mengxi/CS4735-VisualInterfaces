@@ -21,33 +21,111 @@ def main():
 
     # Step 1: Basic infrastructure and building features/descriptions
     step1(map_im, b_names)
-
+    
     # Step 2: Describing compact spatial relations
+
+    # perform list of all relationships
+    step2()
     
     # Step 3: Source and goal description and user interface
     # Step 4: Creativity - Path generation
 
+def step2():
+    '''
+    Generate all binary spatial relationships for every pair,
+    and apply transitive reduction.
+    '''
+    # arrays for all relationships
+    n_array = np.zeros((num_buildings, num_buildings),bool)
+    s_array = np.zeros((num_buildings, num_buildings),bool)
+    w_array = np.zeros((num_buildings, num_buildings),bool)
+    e_array = np.zeros((num_buildings, num_buildings),bool)
+    near_array = np.zeros((num_buildings, num_buildings),bool)
+
+    # generate all relationships
+    for b1 in range(0, num_buildings):
+        for b2 in range(0, num_buildings):
+            if b1 != b2:
+                n_array[b1][b2] = North(b1, b2)
+                s_array[b1][b2] = South(b1, b2)
+                e_array[b1][b2] = East(b1, b2)
+                w_array[b1][b2] = West(b1, b2)
+                near_array[b1][b2] = Near(b1, b2)
+
+
+    # transitive reduction
+    for j in range(0, num_buildings):
+        for i in range(0, num_buildings):
+            if n_array[i][j]:
+                for k in range(0, num_buildings):
+                    if n_array[j][k]:
+                        n_array[i][k] = False
+            if s_array[i][j]:
+                for k in range(0, num_buildings):
+                    if s_array[j][k]:
+                        s_array[i][k] = False
+            if w_array[i][j]:
+                for k in range(0, num_buildings):
+                    if w_array[j][k]:
+                        w_array[i][k] = False
+            if e_array[i][j]:
+                for k in range(0, num_buildings):
+                    if e_array[j][k]:
+                        e_array[i][k] = False
+    # If it's north then we don't need south, if it's east we don't need west
+    for i in range(0, num_buildings):
+        for j in range(0, num_buildings):
+            if n_array[i][j]:
+                s_array[j][i] = False
+            if e_array[i][j]:
+                w_array[j][i] = False
+
+    count = 0
+    ncount = 0
+    for i in range(0, num_buildings):
+        for j in range(0, num_buildings):
+            if n_array[i][j]:
+                print "North of ", i+1," is ", j+1
+                count += 1
+            if s_array[i][j]:
+                print "South of ", i+1," is ", j+1
+                count += 1
+            if w_array[i][j]:
+                print "West of ", i+1," is ", j+1
+                count += 1
+            if e_array[i][j]:
+                print "East of ", i+1," is ", j+1
+                count += 1
+            if near_array[i][j]:
+                print "Near to ", i+1, " is ", j+1
+                ncount += 1
+    print count, ncount
+
 def North(S,G):
     '''Returns True if North of S is G.'''
-    if coms[G][1] < coms[S][1]:
+    #if coms[G][1] < mbrs[S][1]:
+    if coms[G][1] + 20 > coms[S][1]:
         return True
     return False
 
 def South(S,G):
     '''Returns True if South of S is G.'''
-    if coms[G][1] > coms[S][1]:
+    #if coms[G][1] > mbrs[S][3]:
+    if coms[G][1] > 20 + coms[S][1]:
         return True
     return False
 
 def East(S,G):
     '''Returns True if East of S is G.'''
-    if coms[G][0] > coms[S][0]:
+    #if coms[G][0] > mbrs[S][2]:
+    if coms[G][0] > 20 + coms[S][0]:
         return True
     return False
 
 def West(S,G):
     '''Returns True if West of S is G.'''
-    if coms[G][0] < coms[S][0]:
+    #if coms[G][0] < mbrs[S][0]:
+    if coms[G][0] + 20 < coms[S][0]:
         return True
     return False
 
