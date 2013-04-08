@@ -70,7 +70,6 @@ def step1(campus_im, names):
     descriptions = [[] for i in range(0,len(names))]
     # Geometry
     shape(descriptions, areas, coms, mbrs, pix_grid)
-    print descriptions
     # Size
     size(descriptions, areas)
     # Orientation
@@ -90,7 +89,7 @@ def step1(campus_im, names):
 def shape(descriptions, areas, coms, mbrs, pix_grid):
     '''Adds shape descriptions to the desciptions list.'''
 
-    for bnum in range(0, len(areas)):
+    for bnum in range(0, len(descriptions)):
         # get the current min bounding rectangle
         mbr = mbrs[bnum]
         bwidth = mbr[2] - mbr[0] # y diff
@@ -151,10 +150,10 @@ def orientation(descriptions, mbrs):
         bheight = mbr[3] - mbr[1] # y diff
         # North to South oriented
         if bwidth >= 1.5 * bheight:
-            descriptions[bnum].append('N to S')
+            descriptions[bnum].append('E to W')
         # East to West oriented
         elif bheight >= 1.5 * bwidth:
-            descriptions[bnum].append('E to W')
+            descriptions[bnum].append('N to S')
         # Not a real orientation
         else:
             descriptions[bnum].append('symmetric')
@@ -176,7 +175,7 @@ def extrema(descriptions, coms, mbrs, W, H):
     
     mincen = W+H
     mineast = W+H
-    maxwest = 0
+    maxwest = W+H
     minnorth = W+H
     maxsouth = W+H
 
@@ -221,13 +220,15 @@ def extrema(descriptions, coms, mbrs, W, H):
             nor_bnum = bnum
             minnorth = northerness
         # east?
-        if mbr[0] <= mineast:
+        easterness = abs((H/2) - coms[bnum][0]) + (W - mbr[2])
+        if easterness <= mineast:
             east_bnum = bnum
-            mineast = mbr[0]
+            mineast = easterness
         # west?
-        if mbr[2] >= maxwest:
+        westerness = abs((H/2) - coms[bnum][0]) + mbr[0]
+        if westerness <= maxwest:
             west_bnum = bnum
-            maxwest = mbr[2]
+            maxwest = westerness
         # southeast?
         if (H-mbr[3]) + (W - mbr[2]) < minSE:
             minSE = (H-mbr[3]) + (W - mbr[2])
