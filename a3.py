@@ -3,7 +3,9 @@
 # Assignment 3: Columbia Map
 # Due: 4/9/2013
 
-
+import Tkinter
+from Tkinter import *
+import ImageTk
 import numpy as np
 import matplotlib.pyplot as plt
 import Image
@@ -29,7 +31,125 @@ def main():
     step2()
     
     # Step 3: Source and goal description and user interface
+    step3()
+    
     # Step 4: Creativity - Path generation
+
+def step3():
+    '''Displays a GUI that interacts with user's click to show pixel cloud.'''
+    root = Tkinter.Tk()
+
+    # use ppm file so green/red regions easy to display
+    modified_file = "ass3-campus-mod.ppm"
+    image1 = Image.open(modified_file)
+
+    # set size of window to be size of image
+    root.geometry('%dx%d' %(image1.size[0],image1.size[1]))
+    tkpi = ImageTk.PhotoImage(image1)
+
+    # add the image to the display
+    label_image = Tkinter.Label(root, image=tkpi)
+    label_image.place(x=0, y=0, width=image1.size[0], height=image1.size[1])
+
+    # print location of mouse click
+    def click_action(event):
+        '''Display location of mouse click.'''
+        image1 = Image.open(modified_file)
+        # get x,y coordinates of all similar pixels
+        pixeldraw = similarpixels(event.x, event.y)
+
+        color = (255, 0, 0)
+
+        # draw all similar pixels
+        for item in pixeldraw:
+            image1.putpixel((item[0],item[1]), color)
+            
+##        SIZE = 4
+##        for i in range(event.x-SIZE/2, event.x+SIZE/2+1):
+##            for j in range(event.y-SIZE/2, event.y+SIZE/2+1):
+##                if i >= 0 and i < image1.size[0] and \
+##                   j >= 0 and j < image1.size[1]:
+##                    image1.putpixel((i, j), (255,0,255))
+
+        root.geometry('%dx%d' %(image1.size[0],image1.size[1]))
+        tkpi = ImageTk.PhotoImage(image1)
+        
+        label_image = Tkinter.Label(root, image=tkpi)
+        label_image.place(x=0, y=0,\
+                          width=image1.size[0], height=image1.size[1])
+        root.mainloop()
+
+    # mouse click for coordinates
+    root.bind("<Button-1>", click_action)
+
+    # start display
+    root.mainloop()
+
+
+def similarpixels(xcoor, ycoor):
+    '''Returns a list of all similar pixels to xcoor, ycoor.'''
+
+    # relationship array, for N, E, and Near
+    relationships = np.zeros((num_buildings, 3), bool)
+
+    for bnum in range(0, num_buildings):
+        relationships[bnum] = [North(bnum, [xcoor, ycoor]), \
+                               East(bnum, [xcoor, ycoor]), \
+                               Near(bnum, [xcoor, ycoor])]
+    import sys
+    sys.setrecursionlimit(150000)
+    result = recursimpixels(xcoor, ycoor, relationships, [[xcoor, ycoor]], [[xcoor,ycoor]])
+
+    return result
+    
+def recursimpixels(x,y, relate, table, checked):
+    ''' Recursively finds all with relationship relate around x,y.'''
+
+    newrelationships = np.zeros((num_buildings, 3), bool)
+    # check each direction if in bounds and hasn't been checked
+    if x - 1 > 0 and [x-1,y] not in checked:
+        # get the relationships
+        for bnum in range(0, num_buildings):
+            newrelationships[bnum] = [North(bnum, [x-1, y]), \
+                                      East(bnum, [x-1, y]), \
+                                      Near(bnum, [x-1, y])]
+            # add to the checked list
+            checked.append([x-1,y])
+            # if equivalent, add to good list and recur
+            if np.all(relate == newrelationships):
+                table.append([x-1,y])
+                table = recursimpixels(x-1, y, relate, table, checked)
+                
+    if y - 1 > 0 and [x,y-1] not in checked:
+        for bnum in range(0, num_buildings):
+            newrelationships[bnum] = [North(bnum, [x, y-1]), \
+                                      East(bnum, [x, y-1]), \
+                                      Near(bnum, [x, y-1])]
+            checked.append([x,y-1])
+            if np.all(relate == newrelationships):
+                table.append([x,y-1])
+                table = recursimpixels(x, y-1, relate, table, checked)
+                
+    if x + 1 < width and [x+1,y] not in checked:
+        for bnum in range(0, num_buildings):
+            newrelationships[bnum] = [North(bnum, [x+1, y]), \
+                                      East(bnum, [x+1, y]), \
+                                      Near(bnum, [x+1, y])]
+            checked.append([x+1,y])
+            if np.all(relate == newrelationships):
+                table.append([x+1,y])
+                table = recursimpixels(x+1, y, relate, table, checked)
+    if y + 1 < height and [x,y+1] not in checked:
+        for bnum in range(0, num_buildings):
+            newrelationships[bnum] = [North(bnum, [x, y+1]), \
+                                      East(bnum, [x, y+1]), \
+                                      Near(bnum, [x, y+1])]
+            checked.append([x,y+1])
+            if np.all(relate == newrelationships):
+                table.append([x,y+1])
+
+                table = recursimpixels(x, y+1, relate, table, checked)
+    return table
 
 def step2():
     '''
@@ -98,6 +218,7 @@ def step2():
     # reduce the nears
     for i in range(0, num_buildings):
         for j in range(0, num_buildings):
+            # if reflexive keep the smaller building's relationship
             if near_array[i][j] and near_array[j][i]:
                 imbr = mbrs[i]
                 imbrarea = (imbr[2] - imbr[0]+1) * (imbr[3] - imbr[1]+1)
@@ -107,27 +228,31 @@ def step2():
                     near_array[i][j] = False
                 else:
                     near_array[j][i] = False
+    
+    # see the number of relationships
+##    nscount = 0
+##    wecount = 0
+##    ncount = 0
 
-    count = 0
-    ncount = 0
-    for i in range(0, num_buildings):
-        for j in range(0, num_buildings):
-            if n_array[i][j]:
-                print "North of ", i+1," is ", j+1
-                count += 1
-            if s_array[i][j]:
-                print "South of ", i+1," is ", j+1
-                count += 1
-            if w_array[i][j]:
-                print "West of ", i+1," is ", j+1
-                count += 1
-            if e_array[i][j]:
-                print "East of ", i+1," is ", j+1
-                count += 1
-            if near_array[i][j]:
-                print "Near to ", i+1, " is ", j+1
-                ncount += 1
-    print count, ncount
+    # Uncomment to print Step 2
+##    for i in range(0, num_buildings):
+##        for j in range(0, num_buildings):
+##            if n_array[i][j]:
+##                print "North of ", i+1," is ", j+1
+##                nscount += 1
+##            if s_array[i][j]:                           # Shouldn't be any
+##                print "South of ", i+1," is ", j+1
+##                nscount += 1
+##            if w_array[i][j]:                           # Shouldn't be any
+##                print "West of ", i+1," is ", j+1
+##                wecount += 1
+##            if e_array[i][j]:
+##                print "East of ", i+1," is ", j+1
+##                wecount += 1
+##            if near_array[i][j]:
+##                print "Near to ", i+1, " is ", j+1
+##                ncount += 1
+    #print nscount, wecount, ncount
 
 def North(S,G):
     '''Returns True if North of S is G.'''
@@ -210,15 +335,24 @@ def Near(S,G):
     if maxSy >= height:     #edge condition
         maxSy = height - 1
 
-    # get all pixels within min/max range
-    values = pix_grid[minSy:maxSy][:,minSx:maxSx]
-    # check for the goal building number in the pixels
-    places = np.where(values == (G+1))
+    # if G is a building number
+    if isinstance(G, int):
+        # get all pixels within min/max range
+        values = pix_grid[minSy:maxSy][:,minSx:maxSx]
 
-    # if where returns nothing, G is not near to S
-    if np.size(places) == 0:
+        # check for the goal building number in the pixels
+        places = np.where(values == (G+1))
+
+        # if where returns nothing, G is not near to S
+        if np.size(places) == 0:
+            return False
+        return True
+    else:
+        if G[0] >= minSx and G[0] <= maxSx and \
+           G[1] >= minSy and G[1] <= maxSy:
+            return True
         return False
-    return True
+    
 
 def readmaps(label_file, table_file):
     '''Given two filenames, reads in the files and stores the information.'''
@@ -288,15 +422,15 @@ def step1(campus_im, names):
     # Extrema
     extrema()
 
-
-    # Display all info for each building
-    for bnum in range(0, len(names)):
-        print "Building #%d: %s" %(bnum+1,names[bnum])
-        print "\tCenter of Mass: (%f, %f)" %(coms[bnum][0],coms[bnum][1])
-        print "\tArea: ", areas[bnum]
-        print "\tMin Bounding Rect: (%d,%d) to (%d,%d)" \
-            %(mbrs[bnum][0],mbrs[bnum][1],mbrs[bnum][2],mbrs[bnum][3])
-        print "\tDescription: ", descriptions[bnum]
+    #Uncomment to Print Step 1
+##    # Display all info for each building
+##    for bnum in range(0, len(names)):
+##        print "Building #%d: %s" %(bnum+1,names[bnum])
+##        print "\tCenter of Mass: (%f, %f)" %(coms[bnum][0],coms[bnum][1])
+##        print "\tArea: ", areas[bnum]
+##        print "\tMin Bounding Rect: (%d,%d) to (%d,%d)" \
+##            %(mbrs[bnum][0],mbrs[bnum][1],mbrs[bnum][2],mbrs[bnum][3])
+##        print "\tDescription: ", descriptions[bnum]
 
 def shape():
     '''Adds shape descriptions to the desciptions list.'''
