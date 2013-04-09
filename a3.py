@@ -74,12 +74,12 @@ def step2():
                     if e_array[j][k]:
                         e_array[i][k] = False
     # If it's north then we don't need south, if it's east we don't need west
-    for i in range(0, num_buildings):
-        for j in range(0, num_buildings):
-            if n_array[i][j]:
-                s_array[j][i] = False
-            if e_array[i][j]:
-                w_array[j][i] = False
+##    for i in range(0, num_buildings):
+##        for j in range(0, num_buildings):
+##            if n_array[i][j]:
+##                s_array[j][i] = False
+##            if e_array[i][j]:
+##                w_array[j][i] = False
 
     count = 0
     ncount = 0
@@ -261,6 +261,7 @@ def step1(campus_im, names):
     # Extrema
     extrema()
 
+
     # Display all info for each building
     for bnum in range(0, len(names)):
         print "Building #%d: %s" %(bnum+1,names[bnum])
@@ -308,12 +309,36 @@ def shape():
         # narrow
         if bwidth >= 3 * bheight or bheight >= 3 * bwidth:
             descriptions[bnum].append('narrow')
-        # with a hole
-        values[np.where(values != bnum+1)] = 0
-        values[np.where(values != 0)] = -1
-        values = values + 1
-        if snm.label(values)[1] > 1 and 'squarish' not in descriptions[bnum]\
+        # L-shaped
+        nums = pix_grid[mbr[1]:mbr[3]+1][:,mbr[0]:mbr[2]+1].copy()
+        # assign 1 to all zeros and zero to all non-zero numbers
+        nums[np.where(nums != bnum+1)] = 0
+        nums[np.where(nums != 0)] = -1
+        nums = nums + 1
+        # if more than one component and not a squarish or rectangularish it's L
+        if snm.label(nums)[1] > 1 and 'squarish' not in descriptions[bnum]\
            and 'rectangularish' not in descriptions[bnum]:
+            descriptions[bnum].append('L-shaped')
+        # With a hole: increase mbr by one pixel if possible
+        minx = mbr[1] - 1
+        if minx < 0:
+            minx = 0
+        miny = mbr[0] - 1
+        if miny < 0:
+            miny = 0
+        maxx = mbr[3] + 2
+        if maxx > width:
+            maxx = width
+        maxy = mbr[2] + 2
+        if maxy > height:
+            maxy = height
+        # assign one to all zeros, zero to all numbers
+        nums = pix_grid[minx:maxx][:,miny:maxy].copy()
+        nums[np.where(nums != bnum+1)] = 0
+        nums[np.where(nums != 0)] = -1
+        nums = nums + 1
+        # get the number of componenets (if more than one, there's a hole
+        if snm.label(nums)[1] > 1:
             descriptions[bnum].append('with a hole')
                 
 def size():
@@ -329,7 +354,7 @@ def size():
         elif area > .3 * maxarea:
             descriptions[bnum].append('large')      #.80 to .30 (6)
         elif area > .21 * maxarea:
-            descriptions[bnum].append('average')    #.30 to .21 (5)
+            descriptions[bnum].append('average sized')    #.30 to .21 (5)
         elif area > .1 * maxarea:
             descriptions[bnum].append('small')      #.21 to .10 (7)
         else:
@@ -349,13 +374,13 @@ def orientation():
         bheight = mbr[3] - mbr[1] # y diff
         # East to West oriented
         if bwidth >= 1.5 * bheight:
-            descriptions[bnum].append('E to W')
+            descriptions[bnum].append('oriented E to W')
         # North to South oriented
         elif bheight >= 1.5 * bwidth:
-            descriptions[bnum].append('N to S')
+            descriptions[bnum].append('oriented N to S')
         # Not really oriented either way
         else:
-            descriptions[bnum].append('symmetric')
+            descriptions[bnum].append('symmetrically oriented')
 
 def extrema():
     '''Adds extrema descriptions to the descriptions list.'''

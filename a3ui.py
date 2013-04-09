@@ -8,7 +8,6 @@ import Tkinter
 from Tkinter import *
 import Image, ImageTk
 
-
 root = Tkinter.Tk()
 
 # use ppm file so green/red regions easy to display
@@ -29,23 +28,12 @@ def callback(event):
     image1 = Image.open(modified_file)
 
     SIZE = 4
-    minx = event.x-2
-    if minx < 0:
-        minx = 0
-    miny = event.y-2
-    if miny < 0:
-        miny = 0
-    maxx = event.x+2+1
-    if maxx >= image1.size[0]:
-        minx = image1.size[0]-1
-    maxy = event.y+2+1
-    if maxy >= image1.size[1]:
-        miny = image1.size[1]-1
 
-
-    for i in range(minx, maxx):
-        for j in range(miny,maxy):
-            image1.putpixel((i, j), (255,0,255))
+    
+    for i in range(event.x-SIZE/2, event.x+SIZE/2+1):
+        for j in range(event.y-SIZE/2, event.y+SIZE/2+1):
+            if i >= 0 and i < image1.size[0] and j >= 0 and j < image1.size[1]:
+                image1.putpixel((i, j), (255,0,255))
 
     root.geometry('%dx%d' %(image1.size[0],image1.size[1]))
     tkpi = ImageTk.PhotoImage(image1)
@@ -54,7 +42,6 @@ def callback(event):
     label_image.place(x=0, y=0,\
                       width=image1.size[0], height=image1.size[1])
     root.mainloop()
-    
 
 # mouse click for coordinates
 root.bind("<Button-1>", callback)
