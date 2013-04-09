@@ -53,7 +53,6 @@ def step2():
                 w_array[b1][b2] = West(b1, b2)
                 near_array[b1][b2] = Near(b1, b2)
 
-
     # transitive reduction
     for j in range(0, num_buildings):
         for i in range(0, num_buildings):
@@ -73,13 +72,41 @@ def step2():
                 for k in range(0, num_buildings):
                     if e_array[j][k]:
                         e_array[i][k] = False
-    # If it's north then we don't need south, if it's east we don't need west
+    
+    # If it's north then we don't need south, if it's west we don't need east
+    for i in range(0, num_buildings):
+        for j in range(0, num_buildings):
+            if n_array[i][j] and s_array[j][i]:
+                s_array[j][i] = False
+            if e_array[i][j] and w_array[j][i]:
+                w_array[j][i] = False
+
+# I'm not sure this part is right
 ##    for i in range(0, num_buildings):
 ##        for j in range(0, num_buildings):
-##            if n_array[i][j]:
-##                s_array[j][i] = False
-##            if e_array[i][j]:
-##                w_array[j][i] = False
+##            for k in range(0, num_buildings):
+##                if n_array[i][j] and n_array[i][k]:
+##                    for m in range(0, num_buildings):
+##                        if  n_array[j][m]:
+##                            n_array[k][m] = False
+##                if e_array[i][j] and e_array[i][k]:
+##                    for m in range(0, num_buildings):
+##                        if e_array[j][m]:
+##                            e_array[k][m] = False
+
+
+    # reduce the nears
+    for i in range(0, num_buildings):
+        for j in range(0, num_buildings):
+            if near_array[i][j] and near_array[j][i]:
+                imbr = mbrs[i]
+                imbrarea = (imbr[2] - imbr[0]+1) * (imbr[3] - imbr[1]+1)
+                jmbr = mbrs[j]
+                jmbrarea = (jmbr[2] - jmbr[0]+1) * (jmbr[3] - jmbr[1]+1)
+                if imbrarea > jmbrarea:
+                    near_array[i][j] = False
+                else:
+                    near_array[j][i] = False
 
     count = 0
     ncount = 0
@@ -98,7 +125,7 @@ def step2():
                 print "East of ", i+1," is ", j+1
                 count += 1
             if near_array[i][j]:
-                #print "Near to ", i+1, " is ", j+1
+                print "Near to ", i+1, " is ", j+1
                 ncount += 1
     print count, ncount
 
