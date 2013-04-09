@@ -34,13 +34,23 @@ def main():
     step3()
     
     # Step 4: Creativity - Path generation
+    step4()
+
+def step4():
+    '''Describes a path from S to G'''
 
 def step3():
     '''Displays a GUI that interacts with user's click to show pixel cloud.'''
     root = Tkinter.Tk()
 
+    global coordinates
+    global clickcount
+    clickcount = 0
+    coordinates = []
+
     # use ppm file so green/red regions easy to display
     modified_file = "ass3-campus-mod.ppm"
+    global image1
     image1 = Image.open(modified_file)
 
     # set size of window to be size of image
@@ -54,14 +64,28 @@ def step3():
     # print location of mouse click
     def click_action(event):
         '''Display location of mouse click.'''
-        image1 = Image.open(modified_file)
+        global clickcount
+
+        if clickcount == 0:
+            image1 = Image.open(modified_file)
+        else:
+            global image1
+
+        coordinates.append([event.x, event.y])
+
+        if clickcount == 0:
+            color = (255,0,0)
+            clickcount += 1
+        else:
+            color = (0, 255, 0)
+            clickcount = 0
         
         # get x,y coordinates of all similar pixels
         pixeldraw = similarpixels(event.x, event.y)
         
         # draw all similar pixels
         for item in pixeldraw:
-            image1.putpixel((item[0],item[1]), (255, 0, 0))
+            image1.putpixel((item[0],item[1]), color)
 
         root.geometry('%dx%d' %(image1.size[0],image1.size[1]))
         tkpi = ImageTk.PhotoImage(image1)
@@ -109,15 +133,17 @@ def similarpixels(xcoor, ycoor):
                     relationships[k][1] = False
         if relationships[i][2]: #near building
             for k in range(0, num_buildings):
-                if Near(k,i) and Near(i,k):
+                if k != i and Near(k,i) and Near(i,k) and relationships[k][2]:
                     imbr = mbrs[i]
                     imbrarea = (imbr[2] - imbr[0]+1) * (imbr[3] - imbr[1]+1)
                     jmbr = mbrs[k]
                     jmbrarea = (jmbr[2] - jmbr[0]+1) * (jmbr[3] - jmbr[1]+1)
                     if imbrarea > jmbrarea:
                         relationships[i][2] = False
+                        print i+1, k+1
                     else:
                         relationships[k][2] = False
+                        print k+1, i+1
     
     for bnum in range(0, num_buildings):
         if relationships[bnum][0]:
