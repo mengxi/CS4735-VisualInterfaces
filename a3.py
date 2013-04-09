@@ -13,7 +13,7 @@ import scipy.ndimage.measurements as snm
 
 
 def main():
-    ''' Does the work for this program.'''
+    '''Runs all four steps of the assignment'''
     # input files
     labeled_file = "ass3-labeled.pgm"
     table_file = "ass3-table.txt"
@@ -24,10 +24,11 @@ def main():
 
     # Step 1: Basic infrastructure and building features/descriptions
     step1(map_im, b_names)
+
+    global names
+    names = b_names
     
     # Step 2: Describing compact spatial relations
-
-    # perform list of all relationships
     step2()
     
     # Step 3: Source and goal description and user interface
@@ -37,12 +38,16 @@ def main():
     step4()
 
 def step4():
-    '''Describes a path from S to G'''
+    '''Describes a path from S to G and directs a user through clicks.'''
+    PATH1 = [[],[]]
+    PATH2 = [[],[]]
+    PATH3 = [[],[]]
 
 def step3():
     '''Displays a GUI that interacts with user's click to show pixel cloud.'''
     root = Tkinter.Tk()
 
+    # for S/G and R/G and map reset
     global coordinates
     global clickcount
     clickcount = 0
@@ -73,9 +78,11 @@ def step3():
 
         coordinates.append([event.x, event.y])
 
+        # red for first click (S)
         if clickcount == 0:
             color = (255,0,0)
             clickcount += 1
+        # green for second click (G)
         else:
             color = (0, 255, 0)
             clickcount = 0
@@ -87,6 +94,7 @@ def step3():
         for item in pixeldraw:
             image1.putpixel((item[0],item[1]), color)
 
+        # make sure display up to date
         root.geometry('%dx%d' %(image1.size[0],image1.size[1]))
         tkpi = ImageTk.PhotoImage(image1)
         
@@ -119,9 +127,9 @@ def similarpixels(xcoor, ycoor):
                             [[xcoor, ycoor]], [[xcoor,ycoor]])
     print "Location: ", xcoor,ycoor
     
-    # reduce the description                        
+    # reduce the description:                      
 
-    # transitive reduction
+    # transitive reduction for north and east
     for i in range(0, num_buildings):
         if relationships[i][0]: #north of this building
             for k in range(0, num_buildings):
@@ -131,7 +139,7 @@ def similarpixels(xcoor, ycoor):
             for k in range(0, num_buildings):
                 if East(k,i):
                     relationships[k][1] = False
-        if relationships[i][2]: #near building
+        if relationships[i][2]: #near building reduce
             for k in range(0, num_buildings):
                 if k != i and Near(k,i) and Near(i,k) and relationships[k][2]:
                     imbr = mbrs[i]
@@ -140,18 +148,37 @@ def similarpixels(xcoor, ycoor):
                     jmbrarea = (jmbr[2] - jmbr[0]+1) * (jmbr[3] - jmbr[1]+1)
                     if imbrarea > jmbrarea:
                         relationships[i][2] = False
-                        print i+1, k+1
                     else:
                         relationships[k][2] = False
-                        print k+1, i+1
-    
+    for i in range(0, num_buildings):
+        if relationships[i][2]:         # if it's not nearby it's not helpful
+            for k in range(0, num_buildings):
+                if Near(i,k) == False:
+                    relationships[k] = False
+
+    global names
+    # describe the point
+    desc = ""
     for bnum in range(0, num_buildings):
+        count = 0
         if relationships[bnum][0]:
-            print "G is North of ", bnum+1
+            desc += "North of "
+            count += 1
         if relationships[bnum][1]:
-            print "G is East of ", bnum+1
+            if count == 0:
+                desc += "East of "
+                count += 1
+            else:
+                desc += "and East of "
         if relationships[bnum][2]:
-            print "G is Near to ", bnum+1
+            if count == 0:
+                desc += "Near to "
+                count += 1
+            else:
+                desc += "and Near to "
+        if count != 0:
+            desc += "%d (%s), " %(bnum+1, names[bnum])
+    print desc
     print "Cloud Size:", len(result)
     return result
     
