@@ -55,21 +55,13 @@ def step3():
     def click_action(event):
         '''Display location of mouse click.'''
         image1 = Image.open(modified_file)
+        
         # get x,y coordinates of all similar pixels
         pixeldraw = similarpixels(event.x, event.y)
-
-        color = (255, 0, 0)
-
+        
         # draw all similar pixels
         for item in pixeldraw:
-            image1.putpixel((item[0],item[1]), color)
-            
-##        SIZE = 4
-##        for i in range(event.x-SIZE/2, event.x+SIZE/2+1):
-##            for j in range(event.y-SIZE/2, event.y+SIZE/2+1):
-##                if i >= 0 and i < image1.size[0] and \
-##                   j >= 0 and j < image1.size[1]:
-##                    image1.putpixel((i, j), (255,0,255))
+            image1.putpixel((item[0],item[1]), (255, 0, 0))
 
         root.geometry('%dx%d' %(image1.size[0],image1.size[1]))
         tkpi = ImageTk.PhotoImage(image1)
@@ -85,7 +77,6 @@ def step3():
     # start display
     root.mainloop()
 
-
 def similarpixels(xcoor, ycoor):
     '''Returns a list of all similar pixels to xcoor, ycoor.'''
 
@@ -96,17 +87,53 @@ def similarpixels(xcoor, ycoor):
         relationships[bnum] = [North(bnum, [xcoor, ycoor]), \
                                East(bnum, [xcoor, ycoor]), \
                                Near(bnum, [xcoor, ycoor])]
+    # python has a low default recursion limit (1000), so up it
     import sys
     sys.setrecursionlimit(150000)
-    result = recursimpixels(xcoor, ycoor, relationships, [[xcoor, ycoor]], [[xcoor,ycoor]])
+    # get all similar pixels
+    result = recursimpixels(xcoor, ycoor, relationships, \
+                            [[xcoor, ycoor]], [[xcoor,ycoor]])
+    print "Location: ", xcoor,ycoor
+    
+    # reduce the description                        
 
+    # transitive reduction
+    for i in range(0, num_buildings):
+        if relationships[i][0]: #north of this building
+            for k in range(0, num_buildings):
+                if North(k,i):
+                    relationships[k][0] = False
+        if relationships[i][1]: #east of this building
+            for k in range(0, num_buildings):
+                if East(k,i):
+                    relationships[k][1] = False
+        if relationships[i][2]: #near building
+            for k in range(0, num_buildings):
+                if Near(k,i) and Near(i,k):
+                    imbr = mbrs[i]
+                    imbrarea = (imbr[2] - imbr[0]+1) * (imbr[3] - imbr[1]+1)
+                    jmbr = mbrs[k]
+                    jmbrarea = (jmbr[2] - jmbr[0]+1) * (jmbr[3] - jmbr[1]+1)
+                    if imbrarea > jmbrarea:
+                        relationships[i][2] = False
+                    else:
+                        relationships[k][2] = False
+    
+    for bnum in range(0, num_buildings):
+        if relationships[bnum][0]:
+            print "G is North of ", bnum+1
+        if relationships[bnum][1]:
+            print "G is East of ", bnum+1
+        if relationships[bnum][2]:
+            print "G is Near to ", bnum+1
+    print "Cloud Size:", len(result)
     return result
     
 def recursimpixels(x,y, relate, table, checked):
     ''' Recursively finds all with relationship relate around x,y.'''
-
     newrelationships = np.zeros((num_buildings, 3), bool)
     # check each direction if in bounds and hasn't been checked
+    #left
     if x - 1 > 0 and [x-1,y] not in checked:
         # get the relationships
         for bnum in range(0, num_buildings):
@@ -119,7 +146,7 @@ def recursimpixels(x,y, relate, table, checked):
             if np.all(relate == newrelationships):
                 table.append([x-1,y])
                 table = recursimpixels(x-1, y, relate, table, checked)
-                
+    #up
     if y - 1 > 0 and [x,y-1] not in checked:
         for bnum in range(0, num_buildings):
             newrelationships[bnum] = [North(bnum, [x, y-1]), \
@@ -129,7 +156,7 @@ def recursimpixels(x,y, relate, table, checked):
             if np.all(relate == newrelationships):
                 table.append([x,y-1])
                 table = recursimpixels(x, y-1, relate, table, checked)
-                
+    #right         
     if x + 1 < width and [x+1,y] not in checked:
         for bnum in range(0, num_buildings):
             newrelationships[bnum] = [North(bnum, [x+1, y]), \
@@ -139,6 +166,7 @@ def recursimpixels(x,y, relate, table, checked):
             if np.all(relate == newrelationships):
                 table.append([x+1,y])
                 table = recursimpixels(x+1, y, relate, table, checked)
+    #down
     if y + 1 < height and [x,y+1] not in checked:
         for bnum in range(0, num_buildings):
             newrelationships[bnum] = [North(bnum, [x, y+1]), \
@@ -214,7 +242,6 @@ def step2():
 ##                        if e_array[j][m]:
 ##                            e_array[k][m] = False
 
-
     # reduce the nears
     for i in range(0, num_buildings):
         for j in range(0, num_buildings):
@@ -233,7 +260,6 @@ def step2():
 ##    nscount = 0
 ##    wecount = 0
 ##    ncount = 0
-
     # Uncomment to print Step 2
 ##    for i in range(0, num_buildings):
 ##        for j in range(0, num_buildings):
@@ -353,7 +379,6 @@ def Near(S,G):
             return True
         return False
     
-
 def readmaps(label_file, table_file):
     '''Given two filenames, reads in the files and stores the information.'''
     # get the pixel information of the buildings from label_file
