@@ -7,6 +7,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import Image
+import scipy.ndimage.measurements as snm
 
 
 def main():
@@ -307,8 +308,14 @@ def shape():
         # narrow
         if bwidth >= 3 * bheight or bheight >= 3 * bwidth:
             descriptions[bnum].append('narrow')
-        # l-shaped
-        
+        # with a hole
+        values[np.where(values != bnum+1)] = 0
+        values[np.where(values != 0)] = -1
+        values = values + 1
+        if snm.label(values)[1] > 1 and 'squarish' not in descriptions[bnum]\
+           and 'rectangularish' not in descriptions[bnum]:
+            descriptions[bnum].append('with a hole')
+                
 def size():
     '''Adds size descriptions to the descriptions list.'''
     # largest building's area
