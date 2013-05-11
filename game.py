@@ -5,6 +5,7 @@
 
 import card
 import unoimage
+import numpy as np
 
 class Game:
     '''Class for a game.'''
@@ -19,18 +20,20 @@ class Game:
         num_players = input("How many players in this game? ")
         # list of players
         self.players = []
+        self.scores = []
         self.players.append('Computer')
         print "Player 1 Name: Computer"
         for i in range(0,num_players - 1):
             name = raw_input("Player 2 Name: ")
             self.players.append(name)
+            self.scores.append(0)
         # who goes first
         self.cur_player = 0
 
     def setupDeck(self):
         '''Begin the game by setting up the deck status.'''
         startfilename = raw_input("Filename of starting image? ")
-        
+        self.lastcard = unoimage.topcard(startfilename)
         
     def getCurrentPlayer(self):
         '''Return who will move next.'''
@@ -38,5 +41,19 @@ class Game:
     def getNumPlayers(self):
         '''Return the number of players.'''
         return len(self.players)
-
-    def 
+    def getPlayerScore(self, player):
+        '''Return the score of player (num or name).'''
+        try:
+            #number
+            index = int(player)
+            if index > self.getNumPlayers:
+                print 'Invalid player number'
+                return -1
+        except ValueError:
+            #name
+            if self.players.count(player) > 0:
+                index = self.players.index(player)
+            else:
+                print 'Invalid player name'
+                return -1
+        return self.scores[index]

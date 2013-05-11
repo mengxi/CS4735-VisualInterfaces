@@ -8,7 +8,7 @@ import card
 import unoimage
 
 def main():
-    '''Runs and tests the project.'''
+    '''Run and test the project.'''
     mode = raw_input("Game mode (G) or Test mode (T)? ")
     if mode == 'G':
         # play a whole game
@@ -18,7 +18,16 @@ def main():
             # stuff goes here
             playagain = (bool)(raw_input("Play Again? (Y/N) ") == 'Y')
     elif mode == 'T':
-        'just get one picture and test it'
+        #just get one picture and test it
+
+        #test card class
+        c = card.Card('Skip', 'yellow')
+        print c
+
+        
+        imfilen = raw_input("Filename of image? ")
+        lastcard = unoimage.topcard(imfilen)
+        print "Last Card:", lastcard
     else:
         print 'So long...'
 

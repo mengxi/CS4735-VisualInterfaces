@@ -32,3 +32,11 @@ class Card:
     def isAction(self):
         '''Return true if it is an action card.'''
         return (bool)(self.type == 'action')
+    def __str__(self):
+        '''Return the string name of the card.'''
+        s = ''
+        if self.isColor():
+            s += self.color
+            s += " "
+        s += str(self.value)
+        return s
