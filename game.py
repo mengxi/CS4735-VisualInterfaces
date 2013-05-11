@@ -5,7 +5,7 @@
 
 import card
 import unoimage
-import numpy as np
+import numpy as np    #necessary?
 
 class Game:
     '''Class for a game.'''
@@ -33,7 +33,12 @@ class Game:
     def setupDeck(self):
         '''Begin the game by setting up the deck status.'''
         startfilename = raw_input("Filename of starting image? ")
+        # all images in images folder
+        filepre = "images/"
+        startfilename = filepre + startfilename
+        
         self.lastcard = unoimage.topcard(startfilename)
+        self.comphand = unoimage.hand(startfilename)
         
     def getCurrentPlayer(self):
         '''Return who will move next.'''
@@ -42,7 +47,7 @@ class Game:
         '''Return the number of players.'''
         return len(self.players)
     def getPlayerScore(self, player):
-        '''Return the score of player (num or name).'''
+        '''Return the score of player (number or name), or -1 if invalid.'''
         try:
             #number
             index = int(player)
@@ -57,3 +62,8 @@ class Game:
                 print 'Invalid player name'
                 return -1
         return self.scores[index]
+    def getCurrentWinner(self):
+        '''Returns the player with the highest score (ties ? TEST)'''
+        return self.scores.index(max(self.scores))
+
+

@@ -40,3 +40,6 @@ class Card:
             s += " "
         s += str(self.value)
         return s
+    def __repr__(self):
+        '''For use in lists, etc.'''
+        return self.__str__()
