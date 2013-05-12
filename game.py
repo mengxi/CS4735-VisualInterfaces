@@ -4,6 +4,7 @@
 # Game Class
 
 import card
+import Image            #necessary?
 import unoimage
 import numpy as np    #necessary?
 
@@ -21,6 +22,7 @@ class Game:
         # list of players
         self.players = []
         self.scores = []
+        self.winner = False
         self.players.append('Computer')
         print "Player 1 Name: Computer"
         for i in range(0,num_players - 1):
@@ -43,9 +45,11 @@ class Game:
     def getCurrentPlayer(self):
         '''Return who will move next.'''
         return self.players[self.cur_player]
+    
     def getNumPlayers(self):
         '''Return the number of players.'''
         return len(self.players)
+    
     def getPlayerScore(self, player):
         '''Return the score of player (number or name), or -1 if invalid.'''
         try:
@@ -62,8 +66,62 @@ class Game:
                 print 'Invalid player name'
                 return -1
         return self.scores[index]
+    
     def getCurrentWinner(self):
-        '''Returns the player with the highest score (ties ? TEST)'''
+        '''Return the player with the highest score (ties ? TEST)'''
         return self.scores.index(max(self.scores))
+    
+    def getCompMove(self, **kwargs):
+        '''Return a legal move for the computer to make given his hand.'''
+        possible_cards = []
+        
+        # check for those in hand of the same color
+        curcolor = self.lastcard.getColor()
+        if curcolor == 'black':
+            #Last card was a wild, need to know what they called it
+            curcolor = kwargs['wild']
+                
+        # check for those in hand of the same value
+        curvalue = self.lastcard.getValue()
+
+        for c in self.comphand:
+            if curvalue == c.getValue() or curcolor == c.getColor():
+                possible_cards.append(c)
+            elif c.getValue() == 'Wild' or c.getValue() == 'Wild Draw Four':
+                possible_cards.append(c)
+
+        if not possible_cards:
+            return 'DRAW'
+        else:
+            # strategy for comp move here
+            return possible_cards[0]
+    def hasWinner(self):
+        '''Return true if game has been won (ie player has reached 0 cards)'''
+        return self.winner
+    def play(self):
+        '''Play a game of UNO.'''
+        while(not self.hasWinner()):
+            # stuff goes here
+            'hi'
+        return self.winner
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
