@@ -11,47 +11,68 @@ import matplotlib.pyplot as plt
 
 def topcard(filename):
     '''Return the last card played from the image.'''
-    # open the image
+    # open the image                                    ***SIZE?****
     im = Image.open(filename)
 
     # get top half of the image
     (width, height) = im.size
     im = im.crop((0, 0 , width, height/2))
 
-    getcardlocations(im)
-
+    # get all card locations in top half of image (should be two)
+    coords = getcardlocations(im)
             
     # ignore the one that is on the left
+    index = 0
+    if coords[0][1] < coords[1][1]:
+        index = 1
 
-    # dummy return
-    return card.Card(9,'red')
+    #coords list of type: (vmin, hmin, vmax, hmax)
+    bbox = coords[index]
+    # crop requires: left, upper, right, lower
+    im = im.crop((bbox[1],bbox[0], bbox[3], bbox[2]))
+    im.save('topcard.png', 'PNG')
+
+    # get color and value of top card
+    topcolor = cardcolor(im)
+    topvalue = cardvalue(im)
+
+    return card.Card(topvalue,topcolor)
 
 def hand(filename):
     '''Return a list of all cards in the hand given in the image.'''
-    im = Image.open(filename)
+    im1 = Image.open(filename)
 
     # get bottom half of the image
-    (width, height) = im.size
-    im = im.crop((0, height/2, width, height))
+    (width, height) = im1.size
+    im1 = im1.crop((0, height/2, width, height))
 
-    coords = getcardlocations(im)
+    # get all cards in computer hand
+    coords = getcardlocations(im1)
+    print "Computer hand has %d cards."%(len(coords))
 
-    # get (all) connected components
-    # loop through each, identify it, and add it to the list of cards
+    # loop through cards, identify it, and add it to the list of cards
+    cardsinhand = []
+    for cardbbox in coords:
+        # get original image since crop is lazy
+        im2 = Image.open(filename).crop((0, height/2, width, height))
+        im2 = im2.crop((cardbbox[1],cardbbox[0], cardbbox[3], cardbbox[2]))
+        im2.save('handcard%d.png'%len(cardsinhand), 'PNG')
 
-    # dummy return
-    return [card.Card('Skip','blue')]
+        color = cardcolor(im2)
+        print color
+        value = cardvalue(im2)
+        cardsinhand.append(card.Card(value, color))
+        
+    return cardsinhand
 
 def cardcolor(im):
     '''Returns the color of the card in the image.'''
 
-    print im.getcolors()
-    
     # get all pixel values
     pixels = list(im.getdata())
     
     # iterate through pixels, ignoring black and white,
-    rgby = [0,0,0,0] # red, green blue yellow
+    rgby = [0,0,0,0] # red green blue yellow
     colors = ['red','green','blue','yellow']
 
     for pix in pixels:
@@ -103,6 +124,9 @@ def getcardlocations(im):
     totalpixels = height/2 * width
     
     #**** MAX SIZE OF COMPONENTS INSTEAD? ******
+    #print sizes
+    #print max(sizes)
+    
     mask_size = sizes < 0.01 * totalpixels    #remove based on size of image
     remove_pixel = mask_size[labarr]
     labarr[remove_pixel] = 0
@@ -110,18 +134,8 @@ def getcardlocations(im):
     # relabel
     labarr, labcount = ndimage.label(labarr)
 
-    # get bounding box of all cards & update array
-    box = np.nonzero(labarr)
-    vmin = min(box[0])
-    vmax = max(box[0])
-    hmin = min(box[1])
-    hmax = max(box[1])
-
-    labarr = labarr[vmin:vmax+1][:,hmin:hmax+1]
-
-    cardlocs = []
-
     # get locations of all cards
+    cardlocs = []
     for label in range(labcount):
         locs = np.where(labarr == (label+1))
         # get bounding box
@@ -131,8 +145,12 @@ def getcardlocations(im):
         hmax = max(locs[1])
         cardlocs.append((vmin, hmin, vmax, hmax))
 
+    # display labeled image
+    #plt.imshow(labarr)
+    #plt.show()
+
     return cardlocs
 
 def cardvalue(im):
     '''Returns the value of the card in the image.'''
-    return 'skip'
+    return 'TESTTEST'

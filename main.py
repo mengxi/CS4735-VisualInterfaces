@@ -35,20 +35,20 @@ def main():
         filepre = "images/"
         imfilen = filepre + imfilen
         
-        # test color check: red green blue yellow
-        #print unoimage.cardcolor(Image.open("images/red5.png"))
-        #print unoimage.cardcolor(Image.open("images/green9.png"))
-        #print unoimage.cardcolor(Image.open("images/blue2.png"))
-        #print unoimage.cardcolor(Image.open("images/yellow3.png"))
-        #print unoimage.cardcolor(Image.open("images/wild4.png"))
+        # test color check: red green blue yellow 7,8,9,0,5,6, skip, reverse
+        print unoimage.cardcolor(Image.open("images/skip.png"))
+        print unoimage.cardcolor(Image.open("images/reverse.png"))
+        print unoimage.cardcolor(Image.open("images/0.png"))
+        print unoimage.cardcolor(Image.open("images/5.png"))
+        #print unoimage.cardcolor(Image.open("images/wild.png"))
         
         # process the image
         lastcard = unoimage.topcard(imfilen)
-        #hand = unoimage.hand(imfilen)
+        hand = unoimage.hand(imfilen)
         
         # display what you see
         print "Last Card:", lastcard
-        #print "Computer Hand:", hand
+        print "Computer Hand:", hand
         
     else:
         print 'So long...'
