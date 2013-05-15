@@ -32,6 +32,8 @@ class Game:
             self.scores.append(0)
         # who goes first
         self.cur_player = 0
+        # used for reverse
+        self.direction = 1
 
     def setupDeck(self):
         '''Begin the game by setting up the deck status.'''
@@ -81,7 +83,7 @@ class Game:
         # check for those in hand of the same color
         curcolor = self.lastcard.getColor()
         if curcolor == 'black':
-            #Last card was a wild, need to know what they called it
+            # last card was a wild, need to know what they called it
             curcolor = self.wildcolor
                 
         # check for those in hand of the same value
@@ -102,19 +104,17 @@ class Game:
         if not possible_cards:
             return 'DRAW'
         else:
-            # strategy for comp move here if time permits
+            # strategy for comp move (HERE) if time permits
             if choiceindex == -1:
                 choiceindex = 0
-
             print "Computer's Possible Options: "
             print possible_cards
-            
             return possible_cards[choiceindex]
    
     def hasWinner(self):
         '''Return true if game has been won (ie player has reached 0 cards)'''
-        # play until someone scores 100
-        if max(self.scores) > 100:
+        # play until someone scores 50
+        if max(self.scores) > 50:
             self.winner = self.players[self.scores.index(max(self.scores))]
         return self.winner
     
@@ -157,18 +157,36 @@ class Game:
                         self.wildcolor = raw_input("What color is the Wild? ")
             print '\n'
             # next player's turn
-            self.cur_player += 1
+            self.cur_player += self.direction
             if self.cur_player >= len(self.players):
-                self.cur_player = 0        
+                self.cur_player = 0
+            if self.cur_player < 0:
+                self.cur_player = len(self.players) - 1
 
             # get the image for the next play
             gamefilename = raw_input("Filename of image? ")
             filepre = "images/"
             gamefilename = filepre + gamefilename
-        
+
+            # process the image
             self.lastcard = unoimage.topcard(gamefilename)
             print "Top Card is:",self.lastcard
             self.comphand = unoimage.hand(gamefilename)
             print "Computer Hand is:",self.comphand
+
+            # deal with action cards
+            # Skip a Player
+            if self.lastcard.getValue() == 'Skip':
+                print "Player %s Gets Skipped!"
+                self.cur_player += self.direction
+                if self.cur_player >= len(self.players):
+                    self.cur_player = 0
+                if self.cur_player < 0:
+                    self.cur_player = len(self.players) - 1
+            # Reverse the Direction of Play
+            if self.lastcard.getValue() == 'Reverse':
+                print "Direction of Play is Reversed!"
+                self.direction = self.direction * (-1)
+                
 
         return self.winner

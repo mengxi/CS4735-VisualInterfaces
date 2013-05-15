@@ -17,7 +17,7 @@ class Card:
             #number = 0 to 9
             self.type = 'number'
         except ValueError:
-            #action = 'skip','draw two','reverse','wild','wild draw four'
+            #action = 'Skip','Draw Two','Reverse','Wild','Wild Draw Four'
             self.type = 'action'
 
     def getValue(self):
@@ -37,9 +37,9 @@ class Card:
         s = ''
         if self.isColor():
             s += self.color
-            s += " "
+            s += ' '
         s += str(self.value)
         return s
     def __repr__(self):
-        '''For use in lists, etc.'''
+        '''String representation of the card, for use in lists, etc.'''
         return self.__str__()

@@ -6,7 +6,7 @@
 import game
 import card    # should remove in final version
 import unoimage
-import Image   #necessary?
+import Image   # should remove in final version
 
 def main():
     '''Run and test the project.'''
@@ -18,11 +18,11 @@ def main():
         while(playagain):
             cur_game = game.Game()
             winner = cur_game.play()
-            print "Congratulations, %s! You won!"%(winner)
+            print "Congratulations, %s! You won!\n"%(winner)
             playagain = (bool)(raw_input("Play Again? (Y/N) ") == 'Y')
             
     elif mode == 'T':
-        # just get one picture and test it
+        # just get one picture and test it - debugging
 
         imfilen = raw_input("Filename of image? ")
         # all images in images folder
