@@ -1,7 +1,7 @@
 # Emily Schultz (ess2183)
 # May 15, 2013
 # Visual Interfaces Final Project
-# Card Class
+# Card Class for an Uno Card
 
 class Card:
     '''Class for each card, with a type, value, and color.'''

@@ -1,7 +1,7 @@
 # Emily Schultz (ess2183)
 # May 15, 2013
 # Visual Interfaces Final Project
-# Game Class
+# Game Class for an Uno Game
 
 import card
 import unoimage
@@ -34,6 +34,7 @@ class Game:
         self.cur_player = 0
         # used for reverse
         self.direction = 1
+        self.uno = 0
 
     def setupDeck(self):
         '''Begin the game by setting up the deck status.'''
@@ -135,6 +136,10 @@ class Game:
                         colors = ['red','green','blue','yellow']
                         self.wildcolor = random.choice(colors)
                         print "Computer declares the wild to be",self.wildcolor
+                    if len(self.comphand) == 1:
+                        print "Computer cries, UNO!"
+                    elif len(self.comphand) == 0:
+                        self.winner = self.cur_player
                     self.scores[self.cur_player] += 1
                 else:
                     print "Computer is forced to draw a card."
@@ -155,38 +160,44 @@ class Game:
                     self.scores[self.cur_player] += 1
                     if 'Wild' in playermove:
                         self.wildcolor = raw_input("What color is the Wild? ")
+                    query = raw_input("WON or UNO? ")
+                    if query == "WON":
+                        self.winner = self.cur_player
+                    elif query == "UNO":
+                        self.uno = 1
             print '\n'
-            # next player's turn
-            self.cur_player += self.direction
-            if self.cur_player >= len(self.players):
-                self.cur_player = 0
-            if self.cur_player < 0:
-                self.cur_player = len(self.players) - 1
-
-            # get the image for the next play
-            gamefilename = raw_input("Filename of image? ")
-            filepre = "images/"
-            gamefilename = filepre + gamefilename
-
-            # process the image
-            self.lastcard = unoimage.topcard(gamefilename)
-            print "Top Card is:",self.lastcard
-            self.comphand = unoimage.hand(gamefilename)
-            print "Computer Hand is:",self.comphand
-
-            # deal with action cards
-            # Skip a Player
-            if self.lastcard.getValue() == 'Skip':
-                print "Player %s Gets Skipped!"
+            if not self.hasWinner():
+                # next player's turn
                 self.cur_player += self.direction
                 if self.cur_player >= len(self.players):
                     self.cur_player = 0
                 if self.cur_player < 0:
                     self.cur_player = len(self.players) - 1
-            # Reverse the Direction of Play
-            if self.lastcard.getValue() == 'Reverse':
-                print "Direction of Play is Reversed!"
-                self.direction = self.direction * (-1)
+
+                # get the image for the next play
+                gamefilename = raw_input("Filename of image? ")
+                filepre = "images/"
+                gamefilename = filepre + gamefilename
+
+                # process the image
+                self.lastcard = unoimage.topcard(gamefilename)
+                print "Top Card is:",self.lastcard
+                self.comphand = unoimage.hand(gamefilename)
+                print "Computer Hand is:",self.comphand
+
+                # deal with action cards
+                # Skip a Player
+                if self.lastcard.getValue() == 'Skip':
+                    print "Player %s Gets Skipped!"
+                    self.cur_player += self.direction
+                    if self.cur_player >= len(self.players):
+                        self.cur_player = 0
+                    if self.cur_player < 0:
+                        self.cur_player = len(self.players) - 1
+                # Reverse the Direction of Play
+                if self.lastcard.getValue() == 'Reverse':
+                    print "Direction of Play is Reversed!"
+                    self.direction = self.direction * (-1)
                 
 
         return self.winner

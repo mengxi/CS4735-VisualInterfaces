@@ -1,12 +1,12 @@
 # Emily Schultz (ess2183)
 # May 15, 2013
 # Visual Interfaces Final Project
-# Main Method
+# Main Menu
 
 import game
-import card    # should remove in final version
+import card    # can remove in final version
 import unoimage
-import Image   # should remove in final version
+import Image   # can remove in final version
 
 def main():
     '''Run and test the project.'''
@@ -22,7 +22,7 @@ def main():
             playagain = (bool)(raw_input("Play Again? (Y/N) ") == 'Y')
             
     elif mode == 'T':
-        # just get one picture and test it - debugging
+        # just get one picture and test it - for debugging
 
         imfilen = raw_input("Filename of image? ")
         # all images in images folder
@@ -36,6 +36,8 @@ def main():
         #print unoimage.cardcolor(Image.open("images/7.png"))
         #print unoimage.cardcolor(Image.open("images/8.png"))
         #print unoimage.cardcolor(Image.open("images/9.png"))
+        
+        #print unoimage.cardvalue(Image.open("images/wild4.png"),'black')
         
         # process the image
         lastcard = unoimage.topcard(imfilen)
