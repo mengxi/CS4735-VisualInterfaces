@@ -149,7 +149,7 @@ class Game:
                 print "%s's Turn" %(self.players[self.cur_player])
                 print "Computer suggests you play: "
                 if self.lastcard.getColor() != 'black':
-                    print "a card of value: " + self.lastcard.getValue()
+                    print "a card of value: " + str(self.lastcard.getValue())
                     print "a card of color: " + self.lastcard.getColor()
                 print 'a Wild or Wild Draw Four card'
                 if self.lastcard.getValue() == 'Wild':
