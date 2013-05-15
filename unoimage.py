@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 def topcard(filename):
     '''Return the last card played from the image.'''
-    # open the image                                    ***SIZE?****
+    # open the image
     im = Image.open(filename)
 
     # get top half of the image
@@ -30,6 +30,7 @@ def topcard(filename):
     bbox = coords[index]
     # crop requires: left, upper, right, lower
     im = im.crop((bbox[1],bbox[0], bbox[3], bbox[2]))
+    im = im.resize((400,600))
     im.save('topcard.png', 'PNG')
 
     # get color and value of top card
@@ -56,6 +57,7 @@ def hand(filename):
         # get original image since crop is lazy
         im2 = Image.open(filename).crop((0, height/2, width, height))
         im2 = im2.crop((cardbbox[1],cardbbox[0], cardbbox[3], cardbbox[2]))
+        im2 = im2.resize((400,600))
         im2.save('handcard%d.png'%len(cardsinhand), 'PNG')
 
         color = cardcolor(im2)

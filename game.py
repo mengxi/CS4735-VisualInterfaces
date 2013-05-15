@@ -4,9 +4,8 @@
 # Game Class
 
 import card
-import Image            #necessary?
 import unoimage
-import numpy as np    #necessary?
+from random import choice
 
 class Game:
     '''Class for a game.'''
@@ -24,9 +23,11 @@ class Game:
         self.scores = []
         self.winner = False
         self.players.append('Computer')
+        self.scores.append(0)
         print "Player 1 Name: Computer"
+        # get player names
         for i in range(0,num_players - 1):
-            name = raw_input("Player 2 Name: ")
+            name = raw_input("Player %d Name: "%i)
             self.players.append(name)
             self.scores.append(0)
         # who goes first
@@ -40,7 +41,9 @@ class Game:
         startfilename = filepre + startfilename
         
         self.lastcard = unoimage.topcard(startfilename)
+        print "Top Card is:",self.lastcard
         self.comphand = unoimage.hand(startfilename)
+        print "Computer Hand is:",self.comphand
         
     def getCurrentPlayer(self):
         '''Return who will move next.'''
@@ -71,7 +74,7 @@ class Game:
         '''Return the player with the highest score (ties ? TEST)'''
         return self.scores.index(max(self.scores))
     
-    def getCompMove(self, **kwargs):
+    def getCompMove(self):
         '''Return a legal move for the computer to make given his hand.'''
         possible_cards = []
         
@@ -79,13 +82,19 @@ class Game:
         curcolor = self.lastcard.getColor()
         if curcolor == 'black':
             #Last card was a wild, need to know what they called it
-            curcolor = kwargs['wild']
+            curcolor = self.wildcolor
                 
         # check for those in hand of the same value
         curvalue = self.lastcard.getValue()
 
+        # get rid of colored cards first (most accurate)
+        choiceindex = -1
+
         for c in self.comphand:
-            if curvalue == c.getValue() or curcolor == c.getColor():
+            if curcolor == c.getColor():
+                possible_cards.append(c)
+                choiceindex = len(possible_cards)-1
+            elif curvalue == c.getValue():
                 possible_cards.append(c)
             elif c.getValue() == 'Wild' or c.getValue() == 'Wild Draw Four':
                 possible_cards.append(c)
@@ -93,35 +102,73 @@ class Game:
         if not possible_cards:
             return 'DRAW'
         else:
-            # strategy for comp move here
-            return possible_cards[0]
+            # strategy for comp move here if time permits
+            if choiceindex == -1:
+                choiceindex = 0
+
+            print "Computer's Possible Options: "
+            print possible_cards
+            
+            return possible_cards[choiceindex]
+   
     def hasWinner(self):
         '''Return true if game has been won (ie player has reached 0 cards)'''
+        # play until someone scores 100
+        if max(self.scores) > 100:
+            self.winner = self.players[self.scores.index(max(self.scores))]
         return self.winner
+    
     def play(self):
         '''Play a game of UNO.'''
+        # first move - already have image
         while(not self.hasWinner()):
-            # stuff goes here
-            'hi'
+            
+            # computer's turn
+            if self.cur_player == 0:
+                cardtoplay = self.getCompMove()
+                # display move / update score
+                if cardtoplay != 'DRAW':
+                    print "Computer Plays Card:", cardtoplay
+                    self.comphand.remove(cardtoplay)
+                    # choose a wild color at random
+                    if cardtoplay.getValue() == 'Wild':
+                        colors = ['red','green','blue','yellow']
+                        self.wildcolor = random.choice(colors)
+                        print "Computer declares the wild to be",self.wildcolor
+                    self.scores[self.cur_player] += 1
+                else:
+                    print "Computer is forced to draw a card."
+                    
+            # other player's move (computer will advise)        
+            else:
+                print "%s's Turn" %(self.players[self.cur_player])
+                print "Computer suggests you play: "
+                if self.lastcard.getColor() != 'black':
+                    print "a card of value: " + self.lastcard.getValue()
+                    print "a card of color: " + self.lastcard.getColor()
+                print 'a Wild or Wild Draw Four card'
+                if self.lastcard.getValue() == 'Wild':
+                    print "a card of color: " + self.wildcolor
+                playermove = raw_input("What is your move? (DRAW or card)")
+                # update score if they played a card
+                if playermove != 'DRAW':
+                    self.scores[self.cur_player] += 1
+                    if 'Wild' in playermove:
+                        self.wildcolor = raw_input("What color is the Wild? ")
+            print '\n'
+            # next player's turn
+            self.cur_player += 1
+            if self.cur_player >= len(self.players):
+                self.cur_player = 0        
+
+            # get the image for the next play
+            gamefilename = raw_input("Filename of image? ")
+            filepre = "images/"
+            gamefilename = filepre + gamefilename
+        
+            self.lastcard = unoimage.topcard(gamefilename)
+            print "Top Card is:",self.lastcard
+            self.comphand = unoimage.hand(gamefilename)
+            print "Computer Hand is:",self.comphand
+
         return self.winner
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -24,23 +24,18 @@ def main():
     elif mode == 'T':
         # just get one picture and test it
 
-        # test card class
-        #c = card.Card(8,'green')
-        #print c
-        #a = [c, card.Card('skip','yellow')]
-        #print a
-
         imfilen = raw_input("Filename of image? ")
         # all images in images folder
         filepre = "images/"
         imfilen = filepre + imfilen
         
-        # test color check: red green blue yellow 7,8,9,0,5,6, skip, reverse
-        print unoimage.cardcolor(Image.open("images/skip.png"))
-        print unoimage.cardcolor(Image.open("images/reverse.png"))
-        print unoimage.cardcolor(Image.open("images/0.png"))
-        print unoimage.cardcolor(Image.open("images/5.png"))
-        #print unoimage.cardcolor(Image.open("images/wild.png"))
+        # test color check: red green blue yellow
+        # yes: 1,2,3,4,5,6,7,8,9,0, draw2 skip, reverse, wild, wild4 checked
+        #print unoimage.cardcolor(Image.open("images/5.png"))
+        #print unoimage.cardcolor(Image.open("images/6.png"))
+        #print unoimage.cardcolor(Image.open("images/7.png"))
+        #print unoimage.cardcolor(Image.open("images/8.png"))
+        #print unoimage.cardcolor(Image.open("images/9.png"))
         
         # process the image
         lastcard = unoimage.topcard(imfilen)
