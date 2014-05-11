@@ -1,4 +1,6 @@
-CS4735-VisualInterfaces
-=======================
+#CS4735-VisualInterfaces README
 
-COMS 4735: Visual Interfaces to Computers (Spring )
+* COMS W4735: Visual Interfaces to Computers (Spring 2013)
+* Emily Schultz (ess2183)
+
+Repository for homeworks
